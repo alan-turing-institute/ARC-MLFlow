@@ -9,11 +9,11 @@ properties:
     properties:
       environmentVariables:
         - name: POSTGRES_USER
-          value: mlflowuser
+          value: <POSTGRES_USER>
         - name: POSTGRES_PASSWORD
-          value: 2QZ2bp3XIcgV7zC9hf
+          value: <POSTGRES_PASSWORD>
         - name: POSTGRES_DB
-          value: mlflow
+          value: <POSTGRES_DB>
       image: postgres
       ports:
       - port: 5432
@@ -28,10 +28,9 @@ properties:
     properties:
       environmentVariables:
         - name: AZURE_STORAGE_CONNECTION_STRING
-          value: "DefaultEndpointsProtocol=https;AccountName=arcmlflowartifacts;AccountKey=ZzIq3lYWlG9kIjdKdyBgv31DrXyo36dUmfKGUc+R9gFggzL7jW8KfCCdUEKuG7sjBhzHEtb4gR+6+AStK5Wvzw==;EndpointSuffix=core.windows.net"
-      image: arcmlflowcontainerregistry.azurecr.io/mlflow:latest
+          value: <ARTIFACTS_AZURE_STORAGE_CONNECTION_STRING>
       command:
-      - "mlflow server --backend-store-uri 'postgresql+psycopg2://mlflowuser:2QZ2bp3XIcgV7zC9hf@db:5432/mlflow' --default-artifact-root 'wasbs://artifacts@arcmlflowartifacts.blob.core.windows.net/mlflow' --host 0.0.0.0 --serve-artifacts --port 5000"
+      - "mlflow server --backend-store-uri <DB_BACKEND_STORE_URI> --default-artifact-root <ARTIFACT_ROOT> --host 0.0.0.0 --serve-artifacts --port 5000"
       ports:
       - port: 5000
       resources:
@@ -49,5 +48,5 @@ properties:
     - name: mlflowdb
       azureFile:
         sharename: dbfileshare
-        storageAccountName: arcmlflowstorage
-        storageAccountKey: 4PKVaZ8ZrMtpesdRsw3SaIlkzM+skxNsqpmmA7VCPqjKr1Rd/q9mY5fIyCLeggmcJQFfIVNYA7OJ+AStE6l+zA==
+        storageAccountName: <DB_STORAGE_ACCOUNT_NAME>
+        storageAccountKey: <DB_STORAGE_ACCOUNT_KEY>
