@@ -64,7 +64,6 @@ def main():
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("http://0.0.0.0:5000")
     mlflow.set_experiment("test-hf-trainer")
     mlflow.enable_system_metrics_logging()
     with mlflow.start_run():

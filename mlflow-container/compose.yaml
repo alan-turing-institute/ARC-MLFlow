@@ -1,17 +1,6 @@
 # Docker compose environment for testing locally.
 # Variables are assumed to be set in a .env file, or you can set them manually here.
 services:
-  # db:
-  #   image: postgres
-  #   restart: always
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - mlflowdb:/var/lib/postgresql
   mlflow:
     build:
       context: .
@@ -25,8 +14,6 @@ services:
       - "5000:5000"
     volumes:
       - mlflowdb:/data
-    # depends_on:
-    #   - db
 volumes:
   # docker volume create mlflowdb
   mlflowdb:

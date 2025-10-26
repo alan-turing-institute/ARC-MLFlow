@@ -43,6 +43,12 @@ The rest of the dependencies in `pyproject.toml` are just for the examples.
 export MLFLOW_TRACKING_URI="<TRACKING_URI>"
 ```
 
+e.g.
+
+```bash
+export MLFLOW_TRACKING_URI="http://$(az container show --resource-group ${RESOURCE_GROUP} --name mlflow-aci --query ipAddress.fqdn -o tsv):5000/"
+```
+
 or `mlflow.set_tracking_uri("http://0.0.0.0:5000")`
 
 ### Logging Artifacts

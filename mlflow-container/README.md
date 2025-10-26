@@ -13,8 +13,5 @@ Create a `.env` file in this directory definining the following environment vari
 ```bash
 AZURE_STORAGE_CONNECTION_STRING="<your_storage_account_connectino_string>"
 BACKEND_STORE_URI="postgresql+psycopg2://<your_db_user>:<your_db_password>@db:5432/mlflow"
-ARTIFACT_ROOT="wasbs://artifacts@<your_storage_account_name>.blob.core.windows.net/<your_storage_container_name>"
-POSTGRES_USER="mlflowuser"
-POSTGRES_PASSWORD="<your_db_password>"
-POSTGRES_DB="mlflow"
+ARTIFACT_ROOT="wasbs://<your_storage_container_name>@<your_storage_account_name>.blob.core.windows.net/artifacts"
 ```

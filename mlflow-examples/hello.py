@@ -12,7 +12,6 @@ def main():
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("http://0.0.0.0:5000")
     experiment_name = "hello-world-example"
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run() as run:

@@ -68,7 +68,6 @@ def optimize(params):
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("http://0.0.0.0:5000")
     mlflow.set_experiment("test-sweep")
     mlflow.enable_system_metrics_logging()
     search_space = {
