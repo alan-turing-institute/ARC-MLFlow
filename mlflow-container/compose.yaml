@@ -18,7 +18,9 @@ services:
       dockerfile: ./Dockerfile
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
-    command: mlflow server --backend-store-uri ${BACKEND_STORE_URI} --default-artifact-root ${ARTIFACT_ROOT} --host 0.0.0.0 --serve-artifacts --port 5000
+      - BACKEND_STORE_URI=${BACKEND_STORE_URI}
+      - ARTIFACT_ROOT=${ARTIFACT_ROOT}
+    command: "/root/start_mlflow_server.sh"
     ports:
       - "5000:5000"
     volumes:
