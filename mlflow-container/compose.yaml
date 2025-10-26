@@ -13,9 +13,7 @@ services:
     volumes:
           - mlflowdb:/var/lib/postgresql/data
   mlflow:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: ghcr.io/alan-turing-institute/arc-mlflow-image
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
     command: mlflow server --backend-store-uri ${BACKEND_STORE_URI} --default-artifact-root ${ARTIFACT_ROOT} --host 0.0.0.0 --serve-artifacts --port 5000
