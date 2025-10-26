@@ -1,0 +1,53 @@
+apiVersion: '2019-12-01'
+type: Microsoft.ContainerInstance/containerGroups
+name: mlflow-aci
+tags: {}
+location: uksouth
+properties:
+  containers:
+  - name: db
+    properties:
+      environmentVariables:
+        - name: POSTGRES_USER
+          value: mlflowuser
+        - name: POSTGRES_PASSWORD
+          value: 2QZ2bp3XIcgV7zC9hf
+        - name: POSTGRES_DB
+          value: mlflow
+      image: postgres
+      ports:
+      - port: 5432
+      resources:
+        requests:
+          cpu: 1.0
+          memoryInGB: 1.5
+      volumeMounts:
+      - mountPath: /var/lib/postgresql/data
+        name: mlflowdb
+  - name: mlflow
+    properties:
+      environmentVariables:
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          value: "DefaultEndpointsProtocol=https;AccountName=arcmlflowartifacts;AccountKey=ZzIq3lYWlG9kIjdKdyBgv31DrXyo36dUmfKGUc+R9gFggzL7jW8KfCCdUEKuG7sjBhzHEtb4gR+6+AStK5Wvzw==;EndpointSuffix=core.windows.net"
+      image: arcmlflowcontainerregistry.azurecr.io/mlflow:latest
+      command:
+      - "mlflow server --backend-store-uri 'postgresql+psycopg2://mlflowuser:2QZ2bp3XIcgV7zC9hf@db:5432/mlflow' --default-artifact-root 'wasbs://artifacts@arcmlflowartifacts.blob.core.windows.net/mlflow' --host 0.0.0.0 --serve-artifacts --port 5000"
+      ports:
+      - port: 5000
+      resources:
+        requests:
+          cpu: 1.0
+          memoryInGB: 1.5
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    ports:
+      - port: 5000
+    dnsNameLabel: mlflow-aci
+  volumes:
+    - name: mlflowdb
+      azureFile:
+        sharename: dbfileshare
+        storageAccountName: arcmlflowstorage
+        storageAccountKey: 4PKVaZ8ZrMtpesdRsw3SaIlkzM+skxNsqpmmA7VCPqjKr1Rd/q9mY5fIyCLeggmcJQFfIVNYA7OJ+AStE6l+zA==

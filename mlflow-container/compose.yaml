@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+          - mlflowdb:/var/lib/postgresql/data
+  mlflow:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+    command: mlflow server --backend-store-uri ${BACKEND_STORE_URI} --default-artifact-root ${ARTIFACT_ROOT} --host 0.0.0.0 --serve-artifacts --port 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+volumes:
+  mlflowdb:
+    external: true

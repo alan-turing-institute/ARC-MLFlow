@@ -1,0 +1,18 @@
+[project]
+name = "arc-mlflow"
+version = "0.1.0"
+description = "MLFlow Azure deployment"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "azure-storage-blob>=12.27.0",
+    "datasets>=4.0.0",
+    "hyperopt>=0.2.7",
+    "mlflow>=2.22.2",
+    "numpy>=2.3.3",
+    "nvidia-ml-py>=13.580.82",
+    "psutil>=7.1.0",
+    "sentencepiece>=0.2.1",
+    "torchvision>=0.23.0",
+    "transformers[torch]>=4.56.2",
+]
