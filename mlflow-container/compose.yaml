@@ -1,3 +1,5 @@
+# Docker compose environment for testing locally.
+# Variables are assumed to be set in a .env file, or you can set them manually here.
 services:
   db:
     image: postgres
@@ -21,7 +23,6 @@ services:
       - "5000:5000"
     depends_on:
       - db
-
 volumes:
   mlflowdb:
     external: true
