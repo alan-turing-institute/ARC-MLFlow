@@ -1,0 +1,56 @@
+apiVersion: '2019-12-01'
+type: Microsoft.ContainerInstance/containerGroups
+name: mlflow-aci
+tags: {}
+location: uksouth
+properties:
+  containers:
+  # - name: db
+  #   image: postgres
+  #   properties:
+  #     environmentVariables:
+  #       - name: POSTGRES_USER
+  #         value: <POSTGRES_USER>
+  #       - name: POSTGRES_PASSWORD
+  #         value: <POSTGRES_PASSWORD>
+  #       - name: POSTGRES_DB
+  #         value: <POSTGRES_DB>
+  #     ports:
+  #     - port: 5432
+  #     resources:
+  #       requests:
+  #         cpu: 2.0
+  #         memoryInGB: 4
+  #     volumeMounts:
+  #     - mountPath: /var/lib/postgresql
+  #       name: mlflowdb
+  - name: mlflow
+    properties:
+      image: ghcr.io/alan-turing-institute/arc-mlflow-image
+      environmentVariables:
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          value: <AZURE_STORAGE_CONNECTION_STRING>
+      command:
+      - "mlflow server --backend-store-uri <BACKEND_STORE_URI> --default-artifact-root <ARTIFACT_ROOT> --host 0.0.0.0 --serve-artifacts --port 5000"
+      ports:
+      - port: 5000
+      resources:
+        requests:
+          cpu: 2.0
+          memoryInGB: 4
+      volumeMounts:
+      - mountPath: /data
+        name: mlflowdb
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    ports:
+      - port: 5000
+    dnsNameLabel: mlflow-aci
+  volumes:
+    - name: mlflowdb
+      azureFile:
+        sharename: dbfileshare
+        storageAccountName: <STORAGE_ACCOUNT_NAME>
+        storageAccountKey: <STORAGE_ACCOUNT_KEY>

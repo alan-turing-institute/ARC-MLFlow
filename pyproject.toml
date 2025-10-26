@@ -5,10 +5,11 @@ description = "MLFlow Azure deployment"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "azure-identity>=1.25.1",
     "azure-storage-blob>=12.27.0",
     "datasets>=4.0.0",
     "hyperopt>=0.2.7",
-    "mlflow>=2.22.2",
+    "mlflow>=3.5.1",
     "numpy>=2.3.3",
     "nvidia-ml-py>=13.580.82",
     "psutil>=7.1.0",

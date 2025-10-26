@@ -16,6 +16,10 @@ az login
 
 ### Azure Deployment
 
+```bash
+az login
+```
+
 ## Using MLFlow
 
 ### Python Dependencies
@@ -26,7 +30,7 @@ uv sync
 
 The main ones are:
 
-- `mlflow`: The Python library for interacting with a MLFlow server
+- `mlflow[auth]`: The Python library for interacting with a MLFlow server
 - `psutil`, `"nvidia-ml-py`: If you want to log system (CPU, GPU respectively) stats with your job
 - `azure-storage-blob`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
 - `hyperopt`: Is the package MLFlow recommends for hyperparameter sweeps.
