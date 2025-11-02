@@ -1,6 +1,6 @@
-apiVersion: '2019-12-01'
+apiVersion: '2021-10-01'
 type: Microsoft.ContainerInstance/containerGroups
-name: mlflow-aci
+name: <ACI_NAME>
 tags: {}
 location: uksouth
 properties:
@@ -21,7 +21,7 @@ properties:
       - port: 5000
       resources:
         requests:
-          cpu: 2.0
+          cpu: 1.0
           memoryInGB: 4
       volumeMounts:
       - mountPath: /data
@@ -32,10 +32,12 @@ properties:
     type: Public
     ports:
       - port: 5000
-    dnsNameLabel: mlflow-aci
   volumes:
     - name: mlflowdb
       azureFile:
-        sharename: dbfileshare
+        shareName: dbfileshare
         storageAccountName: <STORAGE_ACCOUNT_NAME>
         storageAccountKey: <STORAGE_ACCOUNT_KEY>
+  subnetIds: # Subnet to deploy the container group into
+    - id: <SUBNET_ID>
+      name: <SUBNET_NAME>

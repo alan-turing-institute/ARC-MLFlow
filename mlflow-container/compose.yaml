@@ -7,8 +7,9 @@ services:
       dockerfile: ./Dockerfile
     environment:
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
-      - BACKEND_STORE_URI=${BACKEND_STORE_URI}
-      - ARTIFACT_ROOT=${ARTIFACT_ROOT}
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT}
+      - AUTH_CONFIG_BASE64=${AUTH_CONFIG_BASE64}
     command: "/root/start_mlflow_server.sh"
     ports:
       - "5000:5000"
