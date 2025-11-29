@@ -10,6 +10,10 @@ brew install azure-cli
 az login
 ```
 
+```bash
+brew install pwgen
+```
+
 ## Deployment
 
 ### MLFlow Container Build
@@ -21,7 +25,7 @@ az login
 ```
 
 ```bash
-cd azure-deployment
+cd container-app-deployment
 bash deploy.sh
 ```
 
@@ -79,7 +83,23 @@ If you want to log an artifact locally instead, you should be able to do so by s
 
 ### Examples
 
-The scripts in `mlflow-examples` give a few examples of using MLFlow:
+The scripts in `mlflow-examples` give a few examples of using MLFlow.
+
+To start:
+
+1. Find the name of the MLFlow resource group in the ARC subscription in the Azure portal (https://portal.azure.com), e.g. `arc-mlflow-test`.
+
+2. Find the name of the MLFLow container app, e.g. `mlflow-app`.
+
+3. Set the correct values for these in the first two lines of `mlflow-examples/.env`.
+
+4. Load the environment variables:
+   ```bash
+   cd mlflow-examples
+   source .env
+   ```
+
+Example scripts you can run:
 
 - `uv run mlflow-examples/hello.py`: Basic logging of a parameter, metric, and artifact.
 - `uv run mlflow-examples/train.py`: Automated logging of metrics and models with the HuggingFace transformers Trainer

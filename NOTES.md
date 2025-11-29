@@ -39,7 +39,7 @@
     - with access controlled by Azure firewall ❌ expensive and causing headaches
     - with restricted access by IP address in ACI NSG ❌ not supported
   - Ask Copilot... back to Container apps + a managed postgres database
-    - persistent storage via managed database?
-    - persistent artifact storage via Azure blob?
-    - access restricted by IP?
-    - MLFlow usernames and passwords?
+    - persistent storage via managed database? ✅
+    - persistent artifact storage via Azure blob? ✅
+    - access restricted by IP? ✅
+    - MLFlow usernames and passwords? ✅

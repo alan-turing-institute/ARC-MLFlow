@@ -1,4 +1,4 @@
 .venv
 .vscode
 .env
-aci_template_filled.yaml
+.DS_Store
