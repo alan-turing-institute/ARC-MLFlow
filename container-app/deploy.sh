@@ -256,20 +256,18 @@ az containerapp env create \
 # ============================================================================
 # Deploy PgBouncer Container App
 # ============================================================================
+echo "🔄 Deploying PgBouncer connection pooler..."
 
 # Use private DNS hostname for PostgreSQL
 POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.privatelink.postgres.database.azure.com"
 
-# Azure PostgreSQL requires username@servername format for authentication
-AZURE_PG_ADMIN_USER="${POSTGRES_ADMIN_USER}@${POSTGRES_SERVER_NAME}"
-
 # Database connection strings for PgBouncer
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${MLFLOW_DB_NAME} auth_user=${AZURE_PG_ADMIN_USER} pool_size=150 min_pool_size=15"
-AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${AUTH_DB_NAME} auth_user=${AZURE_PG_ADMIN_USER} pool_size=30 min_pool_size=3"
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${MLFLOW_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=150 min_pool_size=15"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${AUTH_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=30 min_pool_size=3"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
 # Create userlist with admin user for auth_query
-USERLIST="\"${AZURE_PG_ADMIN_USER}\" \"${POSTGRES_ADMIN_PASSWORD}\""
+USERLIST="\"${POSTGRES_ADMIN_USER}\" \"${POSTGRES_ADMIN_PASSWORD}\""
 
 az containerapp create \
   --resource-group $RESOURCE_GROUP \
@@ -287,8 +285,8 @@ az containerapp create \
     "databases=${DATABASES}" \
     "userlist=${USERLIST}" \
   --env-vars \
-    "USERLIST=secretref:userlist" \
     "DATABASES=secretref:databases" \
+    "USERLIST=secretref:userlist" \
     "PGBOUNCER_MIN_POOL_SIZE=3" \
     "PGBOUNCER_DEFAULT_POOL_SIZE=30" \
     "PGBOUNCER_MAX_DB_CONNECTIONS=200" \
@@ -300,7 +298,7 @@ az containerapp create \
     "PGBOUNCER_SERVER_IDLE_TIMEOUT=600" \
     "PGBOUNCER_AUTH_TYPE=scram-sha-256" \
     "PGBOUNCER_AUTH_QUERY=SELECT usename, passwd FROM pg_shadow WHERE usename=\$1" \
-    "PGBOUNCER_SERVER_TLS_SSLMODE=require" \
+    "PGBOUNCER_SERVER_TLS_SSLMODE=require"
 
 # Get PgBouncer FQDN for internal communication
 PGBOUNCER_FQDN=$(az containerapp show \
@@ -311,6 +309,8 @@ PGBOUNCER_FQDN=$(az containerapp show \
 # DB connection strings via PgBouncer
 DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${MLFLOW_DB_NAME}"
 AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${AUTH_DB_NAME}"
+
+echo "📡 PgBouncer deployed at: ${PGBOUNCER_FQDN}"
 
 # ============================================================================
 # Deploy MLflow Container App
