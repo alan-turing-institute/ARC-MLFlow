@@ -48,6 +48,13 @@ az network vnet subnet create \
   --address-prefixes 10.0.8.0/24 \
   --delegations Microsoft.DBforPostgreSQL/flexibleServers
 
+# Subnet for Private Endpoints (NOT delegated)
+az network vnet subnet create \
+  --resource-group $RESOURCE_GROUP \
+  --vnet-name "${RESOURCE_GROUP}-vnet" \
+  --name private-endpoints-subnet \
+  --address-prefixes 10.0.9.0/24
+
 # Get subnet IDs
 CONTAINER_SUBNET_ID=$(az network vnet subnet show \
   --resource-group $RESOURCE_GROUP \
@@ -64,9 +71,10 @@ POSTGRES_SUBNET_ID=$(az network vnet subnet show \
 # ============================================================================
 # PostgreSQL Database
 # ============================================================================
-
 echo "🗄️  Creating PostgreSQL Flexible Server..."
 az provider register --namespace Microsoft.DBforPostgreSQL
+
+# Create with temporary public access for setup
 az postgres flexible-server create \
   --resource-group $RESOURCE_GROUP \
   --name $POSTGRES_SERVER_NAME \
@@ -77,9 +85,17 @@ az postgres flexible-server create \
   --tier Burstable \
   --version 14 \
   --storage-size 32 \
-  --vnet "${RESOURCE_GROUP}-vnet" \
-  --subnet postgres-subnet \
+  --public-access 0.0.0.0 \
   --yes
+
+# Add temporary firewall rule for your IP
+MY_IP=$(curl -4 https://ifconfig.me)
+az postgres flexible-server firewall-rule create \
+  --resource-group $RESOURCE_GROUP \
+  --name $POSTGRES_SERVER_NAME \
+  --rule-name "temp-setup-rule" \
+  --start-ip-address $MY_IP \
+  --end-ip-address $MY_IP
 
 echo "📊 Creating MLflow database..."
 az postgres flexible-server db create \
@@ -87,19 +103,101 @@ az postgres flexible-server db create \
   --server-name $POSTGRES_SERVER_NAME \
   --database-name $MLFLOW_DB_NAME
 
-# Get PostgreSQL connection string
-POSTGRES_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
-
 echo "🔐 Creating MLflow authentication database..."
 az postgres flexible-server db create \
   --resource-group $RESOURCE_GROUP \
   --server-name $POSTGRES_SERVER_NAME \
   --database-name $AUTH_DB_NAME
 
+# Get PostgreSQL connection string
+POSTGRES_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
+
+echo "👤 Creating application DB users and grants..."
+
+# Run SQL commands directly using psql
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "CREATE USER \"${MLFLOW_DB_USER}\" WITH PASSWORD '${MLFLOW_DB_USER_PASSWORD}';" \
+  || echo "MLflow user may already exist"
+
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "CREATE USER \"${AUTH_DB_USER}\" WITH PASSWORD '${AUTH_DB_USER_PASSWORD}';" \
+  || echo "Auth user may already exist"
+
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "GRANT CONNECT ON DATABASE \"${MLFLOW_DB_NAME}\" TO \"${MLFLOW_DB_USER}\";"
+
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "ALTER DATABASE \"${MLFLOW_DB_NAME}\" OWNER TO \"${MLFLOW_DB_USER}\";"
+
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "GRANT CONNECT ON DATABASE \"${AUTH_DB_NAME}\" TO \"${AUTH_DB_USER}\";"
+
+PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
+  -h $POSTGRES_HOST \
+  -U $POSTGRES_ADMIN_USER \
+  -d postgres \
+  -c "ALTER DATABASE \"${AUTH_DB_NAME}\" OWNER TO \"${AUTH_DB_USER}\";"
+
+echo "🔒 Securing PostgreSQL - removing public access..."
+
+# Delete the temporary firewall rule
+az postgres flexible-server firewall-rule delete \
+  --resource-group $RESOURCE_GROUP \
+  --name $POSTGRES_SERVER_NAME \
+  --rule-name "temp-setup-rule" \
+  --yes
+
+# Disable public access
+az postgres flexible-server update \
+  --resource-group $RESOURCE_GROUP \
+  --name $POSTGRES_SERVER_NAME \
+  --public-access Disabled \
+  --yes
+
+# Create private endpoint for VNet integration
+echo "🔗 Creating private endpoint for PostgreSQL..."
+az network private-endpoint create \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --name "${POSTGRES_SERVER_NAME}-pe" \
+  --vnet-name "${RESOURCE_GROUP}-vnet" \
+  --subnet private-endpoints-subnet \
+  --private-connection-resource-id "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.DBforPostgreSQL/flexibleServers/${POSTGRES_SERVER_NAME}" \
+  --group-ids postgresqlServer \
+  --connection-name "${POSTGRES_SERVER_NAME}-connection"
+
+# Create private DNS zone for internal resolution
+az network private-dns zone create \
+  --resource-group $RESOURCE_GROUP \
+  --name "privatelink.postgres.database.azure.com"
+
+# Link DNS zone to VNet
+az network private-dns link vnet create \
+  --resource-group $RESOURCE_GROUP \
+  --zone-name "privatelink.postgres.database.azure.com" \
+  --name "${RESOURCE_GROUP}-link" \
+  --virtual-network "${RESOURCE_GROUP}-vnet" \
+  --registration-enabled false
+
+
 # ============================================================================
 # Storage Account (Artifact Store)
 # ============================================================================
-
 echo "💾 Creating Storage Account..."
 az storage account create \
   --resource-group $RESOURCE_GROUP \
@@ -143,13 +241,15 @@ az containerapp env create \
 # ============================================================================
 echo "🔄 Deploying PgBouncer connection pooler..."
 AZURE_PG_USER="${POSTGRES_ADMIN_USER}@${POSTGRES_SERVER_NAME}"
-DATABASE_URLS="postgresql://${AZURE_PG_USER}:${POSTGRES_ADMIN_PASSWORD}@${POSTGRES_HOST}:5432/${MLFLOW_DB_NAME},postgresql://${AZURE_PG_USER}:${POSTGRES_ADMIN_PASSWORD}@${POSTGRES_HOST}:5432/${AUTH_DB_NAME}"
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_HOST} port=5432 user=${MLFLOW_DB_USER} pool_size=150 min_pool_size=15"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_HOST} port=5432 user=${AUTH_DB_USER} pool_size=30 min_pool_size=3"
+DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
 az containerapp create \
   --resource-group $RESOURCE_GROUP \
   --name "${PGBOUNCER_APP_NAME}" \
   --environment $ENVIRONMENT_NAME \
-  --image edoburu/pgbouncer:latest \
+  --image ghcr.io/alan-turing-institute/arc-pgbouncer-image \
   --target-port 5432 \
   --ingress internal \
   --transport tcp \
@@ -158,19 +258,20 @@ az containerapp create \
   --cpu 0.25 \
   --memory 0.5Gi \
   --secrets \
-    "database-urls=${DATABASE_URLS}" \
+    "databases=${DATABASES}" \
   --env-vars \
-    "DATABASE_URLS=secretref:database-urls" \
-    "MIN_POOL_SIZE=5" \
-    "DEFAULT_POOL_SIZE=150" \
-    "MAX_DB_CONNECTIONS=200" \
-    "RESERVE_POOL_SIZE=100" \
-    "MAX_CLIENT_CONN=1000" \
-    "LISTEN_ADDR=0.0.0.0" \
-    "POOL_MODE=transaction" \
-    "SERVER_IDLE_TIMEOUT=600" \
-    "AUTH_TYPE=trust" \
-    "SERVER_TLS_SSLMODE=require" \
+    "DATABASES=secretref:databases" \
+    "PGBOUNCER_MIN_POOL_SIZE=3" \
+    "PGBOUNCER_DEFAULT_POOL_SIZE=30" \
+    "PGBOUNCER_MAX_DB_CONNECTIONS=200" \
+    "PGBOUNCER_RESERVE_POOL_SIZE=30" \
+    "PGBOUNCER_MAX_CLIENT_CONN=600" \
+    "PGBOUNCER_LISTEN_ADDR=0.0.0.0" \
+    "PGBOUNCER_POOL_MODE=transaction" \
+    "PGBOUNCER_SERVER_IDLE_TIMEOUT=600" \
+    "PGBOUNCER_AUTH_TYPE=scram-sha-256" \
+    "PGBOUNCER_AUTH_QUERY=SELECT usename, passwd FROM pg_shadow WHERE usename=\$1" \
+    "PGBOUNCER_SERVER_TLS_SSLMODE=require" \
 
 # Get PgBouncer FQDN for internal communication
 PGBOUNCER_FQDN=$(az containerapp show \
@@ -179,8 +280,8 @@ PGBOUNCER_FQDN=$(az containerapp show \
   --query properties.configuration.ingress.fqdn -o tsv)
 
 # DB connection strings via PgBouncer
-DB_CONNECTION_STRING="postgresql+psycopg://${POSTGRES_ADMIN_USER}@${PGBOUNCER_APP_NAME}:5432/${MLFLOW_DB_NAME}"
-AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${POSTGRES_ADMIN_USER}@${PGBOUNCER_APP_NAME}:5432/${AUTH_DB_NAME}"
+DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${MLFLOW_DB_NAME}"
+AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${AUTH_DB_NAME}"
 
 # ============================================================================
 # Deploy MLflow Container App
@@ -237,7 +338,6 @@ FQDN=$(az containerapp show \
 # ============================================================================
 # Output Information
 # ============================================================================
-
 echo ""
 echo "✅ MLflow Deployment Complete"
 echo ""

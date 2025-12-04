@@ -17,6 +17,8 @@ RUN apk add --no-cache busybox libevent postgresql-client && \
   chown -R postgres /var/log/pgbouncer /var/run/pgbouncer /etc/pgbouncer
 
 COPY entrypoint.sh /entrypoint.sh
+RUN chmod u+x /entrypoint.sh
+
 COPY --from=build /pgbouncer/pgbouncer /usr/bin
 COPY --from=build /pgbouncer/etc/pgbouncer.ini /etc/pgbouncer/pgbouncer.ini.example
 COPY --from=build /pgbouncer/etc/userlist.txt /etc/pgbouncer/userlist.txt.example

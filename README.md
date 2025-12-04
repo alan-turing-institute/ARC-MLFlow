@@ -3,15 +3,12 @@
 ## Pre-requisites
 
 ```bash
-brew install azure-cli
+brew install azure-cli pwgen libpq
+echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
 ```
 
 ```bash
 az login
-```
-
-```bash
-brew install pwgen
 ```
 
 ## Deployment
