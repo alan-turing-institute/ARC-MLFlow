@@ -6,6 +6,7 @@ PG_CONFIG_DIR=/etc/pgbouncer
 
 invoke_main(){
     check_variables
+    create_userlist
     create_config
     start_app
 }
@@ -22,6 +23,16 @@ error(){
 
     echo "$MESSAGE"
     exit "$EXIT"
+}
+
+create_userlist(){
+    # Create userlist.txt from USERLIST environment variable if provided
+    if [ -n "$USERLIST" ]; then
+        echo "Creating userlist.txt from USERLIST environment variable..."
+        echo "$USERLIST" | tr ',' '\n' > ${PG_CONFIG_DIR}/userlist.txt
+        chmod 600 ${PG_CONFIG_DIR}/userlist.txt
+        export PGBOUNCER_AUTH_FILE="${PG_CONFIG_DIR}/userlist.txt"
+    fi
 }
 
 create_databases_config(){
