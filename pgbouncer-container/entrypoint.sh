@@ -154,7 +154,7 @@ EOF
 
 start_app(){
     echo "Starting pgbouncer."
-    exec /opt/pgbouncer/pgbouncer ${QUIET:+-q} ${PGBOUNCER_USER:+-u ${PGBOUNCER_USER}} ${PG_CONFIG_DIR}/pgbouncer.ini
+    exec /usr/bin/pgbouncer ${QUIET:+-q} ${PGBOUNCER_USER:+-u ${PGBOUNCER_USER}} ${PG_CONFIG_DIR}/pgbouncer.ini
 }
 
 invoke_main
