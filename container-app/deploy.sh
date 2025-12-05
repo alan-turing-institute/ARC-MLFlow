@@ -62,12 +62,6 @@ CONTAINER_SUBNET_ID=$(az network vnet subnet show \
   --name container-apps-subnet \
   --query id -o tsv)
 
-POSTGRES_SUBNET_ID=$(az network vnet subnet show \
-  --resource-group $RESOURCE_GROUP \
-  --vnet-name "${RESOURCE_GROUP}-vnet" \
-  --name postgres-subnet \
-  --query id -o tsv)
-
 # ============================================================================
 # PostgreSQL Database
 # ============================================================================
@@ -200,6 +194,11 @@ PRIVATE_IP=$(az network private-endpoint show \
   --name "${POSTGRES_SERVER_NAME}-pe" \
   --query 'customDnsConfigs[0].ipAddresses[0]' -o tsv)
 
+if [ -z "$PRIVATE_IP" ]; then
+  echo "ERROR: Failed to get private IP for PostgreSQL endpoint"
+  exit 1
+fi
+
 az network private-dns record-set a create \
   --resource-group $RESOURCE_GROUP \
   --zone-name "privatelink.postgres.database.azure.com" \
@@ -262,12 +261,13 @@ echo "🔄 Deploying PgBouncer connection pooler..."
 POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.privatelink.postgres.database.azure.com"
 
 # Database connection strings for PgBouncer
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${MLFLOW_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=150 min_pool_size=15"
-AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${AUTH_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=30 min_pool_size=3"
+# PgBouncer will authenticate clients and use the same user to connect to PostgreSQL
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${MLFLOW_DB_NAME} pool_size=150 min_pool_size=15"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${AUTH_DB_NAME} pool_size=30 min_pool_size=3"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
-# Create userlist with admin user for auth_query
-USERLIST="\"${POSTGRES_ADMIN_USER}\" \"${POSTGRES_ADMIN_PASSWORD}\""
+# Create userlist for PgBouncer plain authentication
+USERLIST="\"${MLFLOW_DB_USER}\" \"${MLFLOW_DB_USER_PASSWORD}\",\"${AUTH_DB_USER}\" \"${AUTH_DB_USER_PASSWORD}\""
 
 az containerapp create \
   --resource-group $RESOURCE_GROUP \
@@ -296,8 +296,7 @@ az containerapp create \
     "PGBOUNCER_LISTEN_PORT=${DB_PORT}" \
     "PGBOUNCER_POOL_MODE=transaction" \
     "PGBOUNCER_SERVER_IDLE_TIMEOUT=600" \
-    "PGBOUNCER_AUTH_TYPE=scram-sha-256" \
-    "PGBOUNCER_AUTH_QUERY=SELECT usename, passwd FROM pg_shadow WHERE usename=\$1" \
+    "PGBOUNCER_AUTH_TYPE=plain" \
     "PGBOUNCER_SERVER_TLS_SSLMODE=require"
 
 # Get PgBouncer FQDN for internal communication
@@ -347,7 +346,7 @@ az containerapp create \
     "MLFLOW_ADMIN_PASSWORD=secretref:admin-password" \
     "MLFLOW_FLASK_SERVER_SECRET_KEY=secretref:auth-secret-key" \
     "MLFLOW_PORT=${MLFLOW_PORT}" \
-    "MLFLOW_SQLALCHEMYSTORE_POOLCLASS"="NullPool" \
+    "MLFLOW_SQLALCHEMYSTORE_POOLCLASS=NullPool" \
   --command "/root/start_mlflow_server.sh"
 
 # Apply IP restrictions
