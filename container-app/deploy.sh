@@ -262,8 +262,8 @@ echo "🔄 Deploying PgBouncer connection pooler..."
 POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.privatelink.postgres.database.azure.com"
 
 # Database connection strings for PgBouncer
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${MLFLOW_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=150 min_pool_size=15"
-AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=5432 dbname=${AUTH_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=30 min_pool_size=3"
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${MLFLOW_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=150 min_pool_size=15"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${AUTH_DB_NAME} auth_user=${POSTGRES_ADMIN_USER} pool_size=30 min_pool_size=3"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
 # Create userlist with admin user for auth_query
@@ -274,7 +274,7 @@ az containerapp create \
   --name "${PGBOUNCER_APP_NAME}" \
   --environment $ENVIRONMENT_NAME \
   --image ghcr.io/alan-turing-institute/arc-pgbouncer-image \
-  --target-port 5432 \
+  --target-port $DB_PORT \
   --ingress internal \
   --transport tcp \
   --min-replicas 1 \
@@ -293,7 +293,7 @@ az containerapp create \
     "PGBOUNCER_RESERVE_POOL_SIZE=30" \
     "PGBOUNCER_MAX_CLIENT_CONN=600" \
     "PGBOUNCER_LISTEN_ADDR=0.0.0.0" \
-    "PGBOUNCER_LISTEN_PORT=5432" \
+    "PGBOUNCER_LISTEN_PORT=${DB_PORT}" \
     "PGBOUNCER_POOL_MODE=transaction" \
     "PGBOUNCER_SERVER_IDLE_TIMEOUT=600" \
     "PGBOUNCER_AUTH_TYPE=scram-sha-256" \
@@ -307,8 +307,8 @@ PGBOUNCER_FQDN=$(az containerapp show \
   --query properties.configuration.ingress.fqdn -o tsv)
 
 # DB connection strings via PgBouncer
-DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${MLFLOW_DB_NAME}"
-AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${AUTH_DB_NAME}"
+DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:${DB_PORT}/${MLFLOW_DB_NAME}"
+AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:${DB_PORT}/${AUTH_DB_NAME}"
 
 echo "📡 PgBouncer deployed at: ${PGBOUNCER_FQDN}"
 
@@ -321,7 +321,7 @@ az containerapp create \
   --name $CONTAINER_APP_NAME \
   --environment $ENVIRONMENT_NAME \
   --image ghcr.io/alan-turing-institute/arc-mlflow-image \
-  --target-port 5000 \
+  --target-port $MLFLOW_PORT \
   --ingress external \
   --min-replicas 0 \
   --max-replicas 3 \
@@ -346,7 +346,7 @@ az containerapp create \
     "MLFLOW_ADMIN_USERNAME=secretref:admin-username" \
     "MLFLOW_ADMIN_PASSWORD=secretref:admin-password" \
     "MLFLOW_FLASK_SERVER_SECRET_KEY=secretref:auth-secret-key" \
-    "MLFLOW_PORT=5000" \
+    "MLFLOW_PORT=${MLFLOW_PORT}" \
     "MLFLOW_SQLALCHEMYSTORE_POOLCLASS"="NullPool" \
   --command "/root/start_mlflow_server.sh"
 
