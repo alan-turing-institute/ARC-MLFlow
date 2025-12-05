@@ -307,8 +307,8 @@ PGBOUNCER_FQDN=$(az containerapp show \
   --query properties.configuration.ingress.fqdn -o tsv)
 
 # DB connection strings via PgBouncer
-DB_CONNECTION_STRING="postgresql://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${MLFLOW_DB_NAME}"
-AUTH_DB_CONNECTION_STRING="postgresql://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${AUTH_DB_NAME}"
+DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${MLFLOW_DB_NAME}"
+AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:5432/${AUTH_DB_NAME}"
 
 echo "📡 PgBouncer deployed at: ${PGBOUNCER_FQDN}"
 
@@ -347,6 +347,7 @@ az containerapp create \
     "MLFLOW_ADMIN_PASSWORD=secretref:admin-password" \
     "MLFLOW_FLASK_SERVER_SECRET_KEY=secretref:auth-secret-key" \
     "MLFLOW_PORT=5000" \
+    "MLFLOW_SQLALCHEMYSTORE_POOLCLASS"="NullPool" \
   --command "/root/start_mlflow_server.sh"
 
 # Apply IP restrictions
