@@ -39,7 +39,7 @@ Run `source .env` file before running scripts using `mlflow`, or add them to you
 
 ### Add an Allowed IP Address
 
-The Turing IP address is automatically added to the allow-list with the deployment. If you need to add another, run:
+The Turing IP address is automatically added to the allow-list as part of the deployment. If you need to add another, run:
 
 ```bash
 cd setup-env
@@ -121,7 +121,7 @@ cd container-app-deployment
 bash deploy.sh
 ```
 
-#### Delete the Deployment (and all data!)
+### Delete the Deployment (and all data!)
 
 ```bash
 az group delete --name $RESOURCE_GROUP
