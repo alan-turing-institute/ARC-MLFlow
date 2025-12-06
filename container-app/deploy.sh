@@ -103,12 +103,9 @@ az postgres flexible-server db create \
   --server-name $POSTGRES_SERVER_NAME \
   --database-name $AUTH_DB_NAME
 
-# Get PostgreSQL connection string
 POSTGRES_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
 
 echo "👤 Creating application DB users and grants..."
-
-# Run SQL commands directly using psql
 PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
   -h $POSTGRES_HOST \
   -U $POSTGRES_ADMIN_USER \
@@ -148,22 +145,18 @@ PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
   -c "ALTER DATABASE \"${AUTH_DB_NAME}\" OWNER TO \"${AUTH_DB_USER}\";"
 
 echo "🔒 Securing PostgreSQL - removing public access..."
-
-# Delete the temporary firewall rule
 az postgres flexible-server firewall-rule delete \
   --resource-group $RESOURCE_GROUP \
   --name $POSTGRES_SERVER_NAME \
   --rule-name "temp-setup-rule" \
   --yes
 
-# Disable public access
 az postgres flexible-server update \
   --resource-group $RESOURCE_GROUP \
   --name $POSTGRES_SERVER_NAME \
   --public-access Disabled \
   --yes
 
-# Create private endpoint for VNet integration
 echo "🔗 Creating private endpoint for PostgreSQL..."
 az network private-endpoint create \
   --resource-group $RESOURCE_GROUP \
@@ -175,12 +168,14 @@ az network private-endpoint create \
   --group-ids postgresqlServer \
   --connection-name "${POSTGRES_SERVER_NAME}-connection"
 
-# Create private DNS zone for internal resolution
+# Create private DNS zone for PostgreSQL hostname resolution
+echo "🔐 Setting up Private DNS Zone for PostgreSQL..."
 az network private-dns zone create \
   --resource-group $RESOURCE_GROUP \
   --name "privatelink.postgres.database.azure.com"
 
-# Link DNS zone to VNet
+# Link the private DNS zone to the VNet
+# This ensures containers in the VNet resolve PostgreSQL hostname to the private endpoint IP
 az network private-dns link vnet create \
   --resource-group $RESOURCE_GROUP \
   --zone-name "privatelink.postgres.database.azure.com" \
@@ -188,7 +183,7 @@ az network private-dns link vnet create \
   --virtual-network "${RESOURCE_GROUP}-vnet" \
   --registration-enabled false
 
-# Create DNS A record for PostgreSQL private endpoint
+# Get the private IP from the private endpoint
 PRIVATE_IP=$(az network private-endpoint show \
   --resource-group $RESOURCE_GROUP \
   --name "${POSTGRES_SERVER_NAME}-pe" \
@@ -199,6 +194,8 @@ if [ -z "$PRIVATE_IP" ]; then
   exit 1
 fi
 
+# Create DNS A record mapping PostgreSQL hostname to private endpoint IP
+# This is required for PgBouncer and other containers to reach PostgreSQL via private network
 az network private-dns record-set a create \
   --resource-group $RESOURCE_GROUP \
   --zone-name "privatelink.postgres.database.azure.com" \
@@ -210,6 +207,7 @@ az network private-dns record-set a add-record \
   --record-set-name $POSTGRES_SERVER_NAME \
   --ipv4-address $PRIVATE_IP
 
+echo "✓ Private DNS configured: ${POSTGRES_SERVER_NAME}.postgres.database.azure.com → ${PRIVATE_IP}"
 
 # ============================================================================
 # Storage Account (Artifact Store)
@@ -257,13 +255,13 @@ az containerapp env create \
 # ============================================================================
 echo "🔄 Deploying PgBouncer connection pooler..."
 
-# Use private DNS hostname for PostgreSQL
-POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.privatelink.postgres.database.azure.com"
+# Use standard PostgreSQL hostname (Azure resolves to private endpoint automatically)
+POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
 
 # Database connection strings for PgBouncer
-# PgBouncer will authenticate clients and use the same user to connect to PostgreSQL
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${MLFLOW_DB_NAME} pool_size=150 min_pool_size=15"
-AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} dbname=${AUTH_DB_NAME} pool_size=30 min_pool_size=3"
+# PgBouncer needs to authenticate to PostgreSQL with the application user credentials
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${MLFLOW_DB_USER} password=${MLFLOW_DB_USER_PASSWORD} dbname=${MLFLOW_DB_NAME} pool_size=150 min_pool_size=15"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${AUTH_DB_USER} password=${AUTH_DB_USER_PASSWORD} dbname=${AUTH_DB_NAME} pool_size=30 min_pool_size=3"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
 # Create userlist for PgBouncer plain authentication
@@ -299,17 +297,12 @@ az containerapp create \
     "PGBOUNCER_AUTH_TYPE=plain" \
     "PGBOUNCER_SERVER_TLS_SSLMODE=require"
 
-# Get PgBouncer FQDN for internal communication
-PGBOUNCER_FQDN=$(az containerapp show \
-  --resource-group $RESOURCE_GROUP \
-  --name "${PGBOUNCER_APP_NAME}" \
-  --query properties.configuration.ingress.fqdn -o tsv)
+# DB connection strings via PgBouncer using Container Apps service discovery
+# Service discovery uses the app name directly as hostname (resolves internally without ingress)
+DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_APP_NAME}:${DB_PORT}/${MLFLOW_DB_NAME}?sslmode=disable"
+AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_APP_NAME}:${DB_PORT}/${AUTH_DB_NAME}?sslmode=disable"
 
-# DB connection strings via PgBouncer
-DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:${DB_PORT}/${MLFLOW_DB_NAME}"
-AUTH_DB_CONNECTION_STRING="postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_USER_PASSWORD}@${PGBOUNCER_FQDN}:${DB_PORT}/${AUTH_DB_NAME}"
-
-echo "📡 PgBouncer deployed at: ${PGBOUNCER_FQDN}"
+echo "📡 PgBouncer deployed: ${PGBOUNCER_APP_NAME}:${DB_PORT}"
 
 # ============================================================================
 # Deploy MLflow Container App
@@ -322,7 +315,7 @@ az containerapp create \
   --image ghcr.io/alan-turing-institute/arc-mlflow-image \
   --target-port $MLFLOW_PORT \
   --ingress external \
-  --min-replicas 0 \
+  --min-replicas 1 \
   --max-replicas 3 \
   --cpu 1.0 \
   --memory 2.0Gi \
