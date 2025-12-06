@@ -45,7 +45,7 @@ def optimize(params):
         collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
         training_args = TrainingArguments(
-            "tmp",
+            "/tmp",
             report_to="mlflow",
             eval_strategy="epoch",
             save_strategy="no",

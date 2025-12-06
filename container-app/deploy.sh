@@ -297,6 +297,19 @@ az containerapp create \
     "PGBOUNCER_AUTH_TYPE=plain" \
     "PGBOUNCER_SERVER_TLS_SSLMODE=require"
 
+echo "Updating cooling and polling intervals..."
+cat > cooldown.yaml<< EOF
+properties:
+    template:
+        scale:
+          cooldownPeriod: $CONTAINER_COOLDOWN_PERIOD
+          pollingInterval: $CONTAINER_POLLING_INTERVAL
+EOF
+az containerapp update \
+  --resource-group $RESOURCE_GROUP \
+  --name $PGBOUNCER_APP_NAME \
+  --yaml cooldown.yaml
+
 # DB connection strings via PgBouncer using Container Apps service discovery
 # Service discovery uses the app name directly as hostname (resolves internally without ingress)
 DB_CONNECTION_STRING="postgresql+psycopg://${MLFLOW_DB_USER}:${MLFLOW_DB_USER_PASSWORD}@${PGBOUNCER_APP_NAME}:${DB_PORT}/${MLFLOW_DB_NAME}?sslmode=disable"
@@ -341,6 +354,13 @@ az containerapp create \
     "MLFLOW_PORT=${MLFLOW_PORT}" \
     "MLFLOW_SQLALCHEMYSTORE_POOLCLASS=NullPool" \
   --command "/root/start_mlflow_server.sh"
+
+echo "Updating cooling and polling intervals..."
+az containerapp update \
+  --resource-group $RESOURCE_GROUP \
+  --name $CONTAINER_APP_NAME \
+  --yaml cooldown.yaml
+rm cooldown.yaml
 
 # Apply IP restrictions
 echo "🔒 Applying IP restrictions..."
