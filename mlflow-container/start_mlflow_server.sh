@@ -1,10 +1,4 @@
 #!/bin/bash
-
-echo "🔍 Debugging connection strings..."
-echo "MLFLOW_BACKEND_STORE_URI: ${MLFLOW_BACKEND_STORE_URI}"
-echo "AUTH_DB_CONNECTION_STRING: ${AUTH_DB_CONNECTION_STRING}"
-echo "MLFLOW_DB_NAME: ${MLFLOW_DB_NAME}"
-
 export MLFLOW_AUTH_CONFIG_PATH="/tmp/basic_auth.ini"
 
 cat > $MLFLOW_AUTH_CONFIG_PATH << EOF
