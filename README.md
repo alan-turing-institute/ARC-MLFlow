@@ -106,8 +106,6 @@ Example scripts you can run:
 
 If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browser through your tracked experiments and artefacts.
 
-The server automatically scales to zero if
-
 ## Deployment
 
 ### Container Builds
