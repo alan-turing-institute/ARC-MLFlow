@@ -275,7 +275,7 @@ az containerapp create \
   --target-port $DB_PORT \
   --ingress internal \
   --transport tcp \
-  --min-replicas 1 \
+  --min-replicas 0 \
   --max-replicas 1 \
   --cpu 0.25 \
   --memory 0.5Gi \
@@ -315,10 +315,19 @@ az containerapp create \
   --image ghcr.io/alan-turing-institute/arc-mlflow-image \
   --target-port $MLFLOW_PORT \
   --ingress external \
-  --min-replicas 1 \
-  --max-replicas 3 \
-  --cpu 1.0 \
-  --memory 2.0Gi \
+  --min-replicas 0 \
+  --max-replicas 6 \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --scale-rule-name "http-scaling" \
+  --scale-rule-type "http" \
+  --scale-rule-http-concurrency 10 \
+  --scale-rule-name "cpu-scaling" \
+  --scale-rule-type "cpu" \
+  --scale-rule-metadata "type=Utilization" "value=70" \
+  --scale-rule-name "memory-scaling" \
+  --scale-rule-type "memory" \
+  --scale-rule-metadata "type=Utilization" "value=70" \
   --secrets \
     "admin-username=${MLFLOW_ADMIN_USERNAME}" \
     "admin-password=${MLFLOW_ADMIN_PASSWORD}" \

@@ -2,10 +2,14 @@
 
 ## Pre-requisites
 
+These are only required for deployment or automatically getting secrets about a deployment using the Azure CLI (you could also get those from the Azure portal):
+
 ```bash
 brew install azure-cli pwgen libpq
 echo 'export PATH="/opt/homebrew/opt/libpq/bin:$PATH"' >> ~/.zshrc
 ```
+
+Before running any commands below make sure you're logged into the Azure CLI with the correct subscription set:
 
 ```bash
 az login
@@ -13,13 +17,13 @@ az login
 
 ## Deployment
 
-### MLFlow Container Build
+### Container Builds
+
+The `mlflow-container` and `pgbouncer-container` directories contain docker files for MLFlow and PgBouncer (for managing connections to the database). The images are hosted with the GitHub container registry, and will be rebuilt whenever a change is pushed to the relevant directory in the repo.
 
 ### Azure Deployment
 
-```bash
-az login
-```
+First, edit any variables you would like to in `container-app/.env` - this specifies names, passwords, and IP restrictions for the deployment, for example. Ensure the resource group you're specifying doesn't already exist. By default passwords are auto-generated and access to the MLFlow server is restricted to the deployment IP address.
 
 ```bash
 cd container-app-deployment
@@ -36,6 +40,10 @@ Where `$RESOURCE_GROUP` is the name of the resource group where you deployed MLF
 
 ## Using MLFlow
 
+### Creating a MLFlow User
+
+TODO
+
 ### Python Dependencies
 
 ```bash
@@ -46,37 +54,29 @@ The main ones are:
 
 - `mlflow`: The Python library for interacting with a MLFlow server
 - `psutil`, `"nvidia-ml-py`: If you want to log system (CPU, GPU respectively) stats with your job
-- `azure-storage-blob`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
+- `azure-storage-blob`, `azure-identity`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
 - `hyperopt`: Is the package MLFlow recommends for hyperparameter sweeps.
 
 The rest of the dependencies in `pyproject.toml` are just for the examples.
 
 ### MLFlow Environment Variables
 
-```bash
-export MLFLOW_TRACKING_URI="<TRACKING_URI>"
+You must have the following environment variables exported in your environment:
+
+- `MLFLOW_TRACKING_URI` - the URL of the MLFlow server
+- `MLFLOW_TRACKING_USERNAME` - your MLFlow username
+- `MLFLOW_TRACKING_PASSWORD` - your MLFlow password
+- `AZURE_STORAGE_CONNECTION_STRING` - the connection string for the Azure storage account for artefacts (only needed if you're logging artefacts to Azure). If you want to log an artifact locally instead, you should be able to do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
+
+
+These can be set by doing (check whether anything needs to be updated in the `.env` file first):
+
+```
+cd mlflow-examples
+source .env
 ```
 
-e.g.
-
-```bash
-export MLFLOW_TRACKING_URI="http://$(az container show --resource-group ${RESOURCE_GROUP} --name mlflow-aci --query ipAddress.fqdn -o tsv):5000/"
-```
-
-or `mlflow.set_tracking_uri("http://0.0.0.0:5000")`
-
-### Logging Artifacts
-
-If you want your script to save artifacts (files, models etc.), the default location for the MLFlow server is an Azure blob. To be able to do this you must have the connection string for the Azure blob set as an environment variable where your script is running. You can get it as follows:
-
-```bash
-export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string \
-    --name $STORAGE_ACCOUNT_NAME \
-    --resource-group $RESOURCE_GROUP \
-    --output tsv)
-```
-
-If you want to log an artifact locally instead, you should be able to do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
+⚠️ This currently gets and uses the MLFlow admin details - needs fixing.
 
 ### Examples
 
