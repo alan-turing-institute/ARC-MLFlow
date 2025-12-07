@@ -33,9 +33,10 @@ Will:
 
 - Prompt for a username and password to create on the MLFlow server
 - Ask for the resource group and app name of the deployed MLFlow server
-- Create the user on the server, and save a `.env` file containing the necessary environment variables to set to use it (`MLFLOW_TRACKING_URI`, `AZURE_STORAGE_CONNECTION_STRING`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`)
+- Create the user on the server
+- Save a `.env` file containing the necessary environment variables to set to use it (`MLFLOW_TRACKING_URI`, `AZURE_STORAGE_CONNECTION_STRING`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`)
 
-Run `source .env` file before running scripts using `mlflow`, or add them to your `.bash_profile`/`.zprofile`/similar.
+Source the saved `.env` file (`source .env`) before running scripts using `mlflow`, or add them to your `.bash_profile`/`.zprofile`/similar.
 
 ### Add an Allowed IP Address
 
