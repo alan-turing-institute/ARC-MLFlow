@@ -75,7 +75,7 @@ az postgres flexible-server create \
   --location $LOCATION \
   --admin-user $POSTGRES_ADMIN_USER \
   --admin-password "$POSTGRES_ADMIN_PASSWORD" \
-  --sku-name Standard_B2s \
+  --sku-name Standard_B1ms \
   --tier Burstable \
   --version 14 \
   --storage-size 32 \
@@ -260,8 +260,8 @@ POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
 
 # Database connection strings for PgBouncer
 # PgBouncer needs to authenticate to PostgreSQL with the application user credentials
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${MLFLOW_DB_USER} password=${MLFLOW_DB_USER_PASSWORD} dbname=${MLFLOW_DB_NAME} pool_size=150 min_pool_size=15"
-AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${AUTH_DB_USER} password=${AUTH_DB_USER_PASSWORD} dbname=${AUTH_DB_NAME} pool_size=30 min_pool_size=3"
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${MLFLOW_DB_USER} password=${MLFLOW_DB_USER_PASSWORD} dbname=${MLFLOW_DB_NAME} pool_size=30 min_pool_size=10"
+AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${AUTH_DB_USER} password=${AUTH_DB_USER_PASSWORD} dbname=${AUTH_DB_NAME} pool_size=3 min_pool_size=1"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
 # Create userlist for PgBouncer plain authentication
@@ -285,10 +285,10 @@ az containerapp create \
   --env-vars \
     "DATABASES=secretref:databases" \
     "USERLIST=secretref:userlist" \
-    "PGBOUNCER_MIN_POOL_SIZE=3" \
-    "PGBOUNCER_DEFAULT_POOL_SIZE=30" \
-    "PGBOUNCER_MAX_DB_CONNECTIONS=200" \
-    "PGBOUNCER_RESERVE_POOL_SIZE=30" \
+    "PGBOUNCER_MIN_POOL_SIZE=1" \
+    "PGBOUNCER_DEFAULT_POOL_SIZE=3" \
+    "PGBOUNCER_MAX_DB_CONNECTIONS=35" \
+    "PGBOUNCER_RESERVE_POOL_SIZE=2" \
     "PGBOUNCER_MAX_CLIENT_CONN=600" \
     "PGBOUNCER_LISTEN_ADDR=0.0.0.0" \
     "PGBOUNCER_LISTEN_PORT=${DB_PORT}" \
