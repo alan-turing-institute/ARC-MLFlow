@@ -53,6 +53,8 @@ This will prompt for an IP address/address range to add, and a suitable label fo
 
 ⚠️ The MLFlow server will automatically scale off if unused for a period of time (currently 15 minutes). The containers will ramp back up automatically when requested, but the first connectiion after the cooldown period will be slow.
 
+General MLFlow documentation is available here: https://mlflow.org/docs/latest/ml/
+
 ### Python Dependencies
 
 ```bash
@@ -81,22 +83,6 @@ You must have the following environment variables exported in your environment:
 
 ### Examples
 
-The scripts in `mlflow-examples` give a few examples of using MLFlow.
-
-To start:
-
-1. Find the name of the MLFlow resource group in the ARC subscription in the Azure portal (https://portal.azure.com), e.g. `arc-mlflow-test`.
-
-2. Find the name of the MLFLow container app, e.g. `mlflow-app`.
-
-3. Set the correct values for these in the first two lines of `mlflow-examples/.env`.
-
-4. Load the environment variables:
-   ```bash
-   cd mlflow-examples
-   source .env
-   ```
-
 Example scripts you can run:
 
 - `uv run mlflow-examples/hello.py`: Basic logging of a parameter, metric, and artifact.
@@ -105,7 +91,7 @@ Example scripts you can run:
 
 ### The MLFlow UI
 
-If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browser through your tracked experiments and artefacts.
+If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browse through your tracked experiments and artefacts.
 
 ## Deployment
 
