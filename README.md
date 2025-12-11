@@ -40,7 +40,7 @@ Source the saved `.env` file (`source .env`) before running scripts using `mlflo
 
 ### Add an Allowed IP Address
 
-The Turing IP address is automatically added to the allow-list as part of the deployment. If you need to add another, run:
+The Turing IP address is automatically added to the allow-list as part of the deployment (which will also be your IP address if you're on the VPN). If you need to add another, run:
 
 ```bash
 cd setup-env
