@@ -260,7 +260,7 @@ POSTGRES_PRIVATE_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
 
 # Database connection strings for PgBouncer
 # PgBouncer needs to authenticate to PostgreSQL with the application user credentials
-MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${MLFLOW_DB_USER} password=${MLFLOW_DB_USER_PASSWORD} dbname=${MLFLOW_DB_NAME} pool_size=30 min_pool_size=10"
+MLFLOW_DB_STR="${MLFLOW_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${MLFLOW_DB_USER} password=${MLFLOW_DB_USER_PASSWORD} dbname=${MLFLOW_DB_NAME} pool_size=30 min_pool_size=3"
 AUTH_DB_STR="${AUTH_DB_NAME} = host=${POSTGRES_PRIVATE_HOST} port=${DB_PORT} user=${AUTH_DB_USER} password=${AUTH_DB_USER_PASSWORD} dbname=${AUTH_DB_NAME} pool_size=3 min_pool_size=1"
 DATABASES="${MLFLOW_DB_STR},${AUTH_DB_STR}"
 
