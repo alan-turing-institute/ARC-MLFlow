@@ -22,6 +22,8 @@ To run these commands you will need to know:
 
 ### MLFlow User Setup and Environment Variables
 
+⚠️ This script assumes you are logged into the Azure CLI (see pre-requisites) and have a `uv` environment with `mlflow[auth]` installed (see Python Dependencies).
+
 Running the following script:
 
 ```bash
@@ -63,7 +65,7 @@ uv sync
 
 The main ones are:
 
-- `mlflow`: The Python library for interacting with a MLFlow server
+- `mlflow[auth]`: The Python library for interacting with a MLFlow server
 - `psutil`, `nvidia-ml-py`: If you want to log system (CPU, GPU respectively) stats with your job
 - `azure-storage-blob`, `azure-identity`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
 - `hyperopt`: Is the package MLFlow recommends for hyperparameter sweeps.
