@@ -1,3 +1,5 @@
+set -e
+
 read -p "Azure Deployment Resource Group [default: arc-turing-mlflow]: " RESOURCE_GROUP
 if [ -z "$RESOURCE_GROUP" ]; then
     RESOURCE_GROUP="arc-turing-mlflow"
