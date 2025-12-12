@@ -40,14 +40,14 @@ AZURE_STORAGE_CONNECTION_STRING=$(az containerapp secret show \
     --output tsv)
 
 echo "🔐 Retrieving MLFlow admin credentials..."
-MLFLOW_TRACKING_USERNAME=$(az containerapp secret show \
+export MLFLOW_TRACKING_USERNAME=$(az containerapp secret show \
     --resource-group $RESOURCE_GROUP \
     --name $CONTAINER_APP_NAME \
     --secret-name "admin-username" \
     --query value \
     --output tsv)
 
-MLFLOW_TRACKING_PASSWORD=$(az containerapp secret show \
+export MLFLOW_TRACKING_PASSWORD=$(az containerapp secret show \
     --resource-group $RESOURCE_GROUP \
     --name $CONTAINER_APP_NAME \
     --secret-name "admin-password" \
@@ -63,9 +63,11 @@ EOF
 
 echo "💾 Saving environment details"
 cat > .env<< EOF
+set -a
 MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}"
 AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}"
 MLFLOW_TRACKING_USERNAME="${NEW_USERNAME}"
 MLFLOW_TRACKING_PASSWORD="${NEW_PASSWORD}"
+set +a
 EOF
 echo "✅ MLFlow environment details saved to .env"
