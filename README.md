@@ -1,6 +1,13 @@
 # ARC-MLFlow
 
-Azure MLFlow deployment and instructions for how to use it.
+Azure MLFlow deployment and instructions for how to use it. It deploys (with current parameters):
+
+- MLFlow tracking servers to an Azure Container Apps environment, auto-scaling between 0 and 3 instances.
+- An Azure PostgreSQL B1ms managed database for MLFlow logged metadata and metrics, and user details.
+- A PgBouncer container to manage connection pools from the MLFlow tracking servers and the database.
+- All of the above in a VNet, with access restricted to an IP allow list.
+- An Azure Storage Account and Blob for storing artifacts (models etc.) Publicly exposed but with authenticated access.
+- Basic user/password authentication to the MLFlow server (a better option would be to replace this to setup access via Microsoft/GitHub accounts using nginx/similar)
 
 ## Pre-requisites
 
