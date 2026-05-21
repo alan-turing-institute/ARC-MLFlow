@@ -113,7 +113,7 @@ The `mlflow-container` and `pgbouncer-container` directories contain docker file
 First, edit any variables you would like to in `container-app/.env` - this specifies names, passwords, and IP restrictions for the deployment, for example. Ensure the resource group you're specifying doesn't already exist. By default passwords are auto-generated and access to the MLFlow server is restricted to the deployment IP address.
 
 ```bash
-cd container-app-deployment
+cd container-app
 bash deploy.sh
 ```
 
