@@ -1,4 +1,4 @@
-# MLFlow image with Postgres and Azure Blob Storage support
+# MLFlow image with Postgres and Azure Blob Storage support.
 # Launch with command:
 #   /root/start_mlflow_server.sh
 # And environment variables:
