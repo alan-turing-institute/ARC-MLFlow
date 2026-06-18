@@ -124,3 +124,18 @@ az group delete --name $RESOURCE_GROUP
 ```
 
 Where `$RESOURCE_GROUP` is the name of the resource group you deployed MLFlow to.
+
+### Updating the Server
+
+1. Trigger re-builds via GitHub Actions if necessary
+  - [MLFlow image action](https://github.com/alan-turing-institute/ARC-MLFlow/actions/workflows/build_mlflow.yaml)
+  - [PG Bouncer image action](https://github.com/alan-turing-institute/ARC-MLFlow/actions/workflows/build_pgbouncer.yaml)
+
+2. Trigger the container app to update:
+  ```
+  az containerapp update \
+  --resource-group arc-turing-mlflow \
+  --name arc-turing-mlflow \
+  --image ghcr.io/alan-turing-institute/arc-mlflow-image:latest
+  ```
+  Replace `--name` with either the MLFlow or PG Bouncer container as required, e.g. `arc-turing-mlflow` or `pgboucner-app` (see `container-app/.env` for defaults).

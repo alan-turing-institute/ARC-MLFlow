@@ -18,4 +18,3 @@ mlflow server \
     --default-artifact-root $MLFLOW_DEFAULT_ARTIFACT_ROOT \
     --app-name basic-auth \
     --serve-artifacts \
-    --allowed-hosts "*"

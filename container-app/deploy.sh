@@ -330,8 +330,8 @@ az containerapp create \
   --ingress external \
   --min-replicas 0 \
   --max-replicas 3 \
-  --cpu 1.0 \
-  --memory 2.0Gi \
+  --cpu 2.0 \
+  --memory 4.0Gi \
   --secrets \
     "admin-username=${MLFLOW_ADMIN_USERNAME}" \
     "admin-password=${MLFLOW_ADMIN_PASSWORD}" \
@@ -367,7 +367,7 @@ echo "🔒 Applying IP restrictions..."
 az containerapp ingress access-restriction set \
   --resource-group $RESOURCE_GROUP \
   --name $CONTAINER_APP_NAME \
-  --rule-name "allowed-ips" \
+  --rule-name "Turing" \
   --ip-address $ALLOWED_IPS \
   --action Allow
 
@@ -376,6 +376,14 @@ FQDN=$(az containerapp show \
   --resource-group $RESOURCE_GROUP \
   --name $CONTAINER_APP_NAME \
   --query properties.configuration.ingress.fqdn -o tsv)
+
+# Set allowed origins/hosts
+az containerapp update \
+  --name $CONTAINER_APP_NAME \
+  --resource-group  $RESOURCE_GROUP \
+  --set-env-vars \
+    "MLFLOW_SERVER_CORS_ALLOWED_ORIGINS=https://${FQDN}" \
+    "MLFLOW_SERVER_ALLOWED_HOSTS=${FQDN}"
 
 # ============================================================================
 # Output Information
