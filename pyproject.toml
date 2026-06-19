@@ -12,7 +12,6 @@ dependencies = [
     "mlflow[auth]>=3.14",
     "numpy>=2.3.3",
     "nvidia-ml-py>=13.580.82",
-    "optuna>=4.9.0",
     "psutil>=7.1.0",
     "sentencepiece>=0.2.1",
     "torchvision>=0.23.0",

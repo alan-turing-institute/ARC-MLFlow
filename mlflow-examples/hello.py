@@ -12,7 +12,7 @@ def main():
 
 
 if __name__ == "__main__":
-    experiment_name = "data-sim-metrics"
-    mlflow.set_experiment(experiment_name)
-    with mlflow.start_run(run_name="hello-world") as run:
+    mlflow.set_workspace("examples")  # e.g. project name
+    mlflow.set_experiment("hello-world")
+    with mlflow.start_run() as run:
         main()

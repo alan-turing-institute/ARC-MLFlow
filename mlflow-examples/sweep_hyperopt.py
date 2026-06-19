@@ -68,12 +68,13 @@ def optimize(params):
 
 
 if __name__ == "__main__":
-    mlflow.set_experiment("examples")
+    mlflow.set_workspace("examples")  # e.g. project name
+    mlflow.set_experiment("sweep-hyperopt")
     mlflow.enable_system_metrics_logging()
     search_space = {
         "learning_rate": hp.loguniform("learning_rate", np.log(1e-5), np.log(1e-1)),
     }
-    with mlflow.start_run(run_name="sweep-hyperopt"):
+    with mlflow.start_run():
         trials = Trials()
         best_params = fmin(
             fn=optimize,
