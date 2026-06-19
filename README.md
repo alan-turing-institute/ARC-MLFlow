@@ -150,7 +150,7 @@ If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and 
 | Private Endpoint | 1 |
 
 **Estimated Cost:**
-- Light usage: £20/month for light usage (container apps mostly scaled to 0, ongoing database and networking costs only)
+- Light usage: £20/month (container apps mostly scaled to 0, ongoing database and networking costs only)
 - Heavy usage: £500/month (dominated by MLFlow container costs, if they are scaled to 3 replicas 24/7)
 
 ### Container Builds
