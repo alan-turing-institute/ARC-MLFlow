@@ -25,9 +25,10 @@ uv sync
 
 To run these commands you will need to know:
 
-- If using the user interface
-  - The URL of the MLFlow server
-- If using the setup scripts
+**If using the user interface:**
+- The URL of the MLFlow server
+
+**If using the setup scripts:**
   - The Azure resource group the MLFlow server has been deployed into (default: `arc-turing-mlflow`)
   - The name of the MLFlow container app (default: same as the resource group)
   - The Azure CLI installed and logged in (see pre-requisites)
