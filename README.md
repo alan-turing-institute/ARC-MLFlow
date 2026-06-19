@@ -45,7 +45,7 @@ Ask the owner of the server for these, or you can get them from the Azure portal
 
 ### User Setup
 
-### 1. Add an Allowed IP Address
+#### 1. Add an Allowed IP Address
 
 The Turing IP address is automatically added to the allow-list as part of the deployment (which will also be your IP address if you're on the VPN). If you need to add another, run:
 
@@ -56,13 +56,13 @@ bash add_ip.sh
 
 This will prompt for an IP address/address range to add, and a suitable label for it.
 
-### 2. Create a user
+#### 2. Create a user
 
-#### In a browser:
+##### In a browser:
 
 If you are logged in to the MLFlow UI as an admin, you can create users from there by clicking on your username (bottom left) then going to the "Manage" menu.
 
-#### Via the user creation script:
+##### Via the user creation script:
 
 Running the following script:
 
@@ -81,19 +81,19 @@ Will:
 Source the saved `.env` file (`source .env`) before running scripts using `mlflow`, or add them to your `.bash_profile`/`.zprofile`/similar.
 
 
-### 3. Create a workspace [if needed]
+#### 3. Create a workspace [if needed]
 
 Experiments and runs on the MLFlow server are grouped under a "workspace". For our purposes we will generally want a separate workspace for each project. To create one:
 
-#### In the browser
+##### In the browser
 
 If logged in to the MLFlow UI as an admin, the homepage showing the list of workspaces has a "Create new Workspace" button.
 
-#### Workspace creation script
+##### Workspace creation script
 
 Running the `setup-env/create_workspace.sh` script will prompt for a workspace name and a username to make admin on that workspace, and create the workspace for you using the API.
 
-#### Workspace permissions
+##### Workspace permissions
 
 User permissions should generally be managed via "roles", which can have multiple users assigned to them. The server is setup so that all users can *read* all workspaces, i.e. all users can see the content of all workspaces, but not create/change anything in them.
 
