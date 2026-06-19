@@ -138,7 +138,7 @@ If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and 
 
 ### Components
 
-<img src="docs/azure_deployment.png" alt="Azure deployment components diagram" width="512"/>
+<img src="docs/azure_deployment.png" alt="Azure deployment components diagram" width="768"/>
 
 | Service | Quantity |
 | --- | --- |
