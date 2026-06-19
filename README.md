@@ -1,13 +1,19 @@
 # ARC-MLFlow
 
-Azure MLFlow deployment and instructions for how to use it. It deploys (with current parameters):
+This repo deploys a MLFlow server to Azure. If you just want to learn about what it deploys, see [here](#components). If you want to use it, keep reading.
 
-- MLFlow tracking servers to an Azure Container Apps environment, auto-scaling between 0 and 3 instances.
-- An Azure PostgreSQL B1ms managed database for MLFlow logged metadata and metrics, and user details.
-- A PgBouncer container to manage connection pools from the MLFlow tracking servers and the database.
-- All of the above in a VNet, with access restricted to an IP allow list.
-- An Azure Storage Account and Blob for storing artifacts (models etc.) Publicly exposed but with authenticated access.
-- Basic user/password authentication to the MLFlow server (if we use/persist these servers we should setup SSO instead/as well as this)
+**⚠️ Caveats:** Although I've made best efforts, within reason, I cannot assure the security or stability of the server. With an abundance of caution I'd suggest you work under the assumption that:
+- Everything logged to MLFlow is public.
+  - *Positive version: Access is controlled via an Azure-managed IP allow-list and MLFlow-managed user accounts*
+- The server may fail and all data be deleted at any time.
+  - *Positive version: The database is an Azure managed service, so we should be able to recover data from there if everything else fails, unless someone accidentally deletes it...*
+
+On that happy note, to get up and running:
+
+1. Install the [pre-requisites](#pre-requisites).
+2. If you need to create a new deployment, see the last [creating a new deployment](#creating-a-new-deployment) section.
+3. To setup an account and workspace on a pre-existing server, see [MLFlow Account and Workspace setup](#mlflow-account-and-workspace-setup).
+4. To interact with a pre-existing server in Python, see [Using MLFlow in Python](#using-mlflow-in-python).
 
 ## Pre-requisites
 
@@ -21,7 +27,8 @@ uv sync
 
 `pwgen` is used to auto-generate passwords.
 
-## MLFlow Account and Workspace Setup [for an existing server]
+
+## MLFlow Account and Workspace Setup
 
 To run these commands you will need to know:
 
@@ -91,9 +98,7 @@ When a workspace is created, MLFlow creates two default roles for it - an admin 
 
 You may want to create a role with "Edit" access to the workspace for project members, which allows users assigned to it to also use/edit other people's experiments.
 
-## Using MLFlow in Python [with an existing server]
-
-⚠️ The MLFlow server will automatically scale off if unused for a period of time (currently 15 minutes). The containers will ramp back up automatically when requested, but the first connectiion after the cooldown period will be slow.
+## Using MLFlow in Python
 
 General MLFlow documentation is available here: https://mlflow.org/docs/latest/ml/
 
@@ -138,7 +143,28 @@ If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and 
 
 ### Components
 
+The main components are:
+- Up to 3 parallel MLFlow server instances, running in an Azure container app.
+- A managed Azure PostgresQL database for MLFlow data (runs and metrics/parameters logged to them) and user details.
+- 1 instance of PgBouncer in an Azure container app, to manage a connection pool to the database.
+- An Azure storage account to provide Blob storage for artifacts (models, datasets, etc.)
+
+They connect together roughly like this:
+
 <img src="docs/azure_deployment.png" alt="Azure deployment components diagram" width="768"/>
+
+**Container app autoscaling:**
+- The MLFlow and PgBouncer container apps are configured to automatically scale off if they are unused for a period of time (currently 15 minutes). The containers will ramp back up automatically when any request is made to the server, but the first connectiion after the cooldown period will be slow.
+
+**Security:**
+- Access to the MLFlow server is IP restricted (via a configurable allowlist in Azure).
+- Authentication on the server is managed by MLFlow's built-in `basic-auth`, which allows role-based permissions for users to different resources on the server. If we use/persist servers longer-term we should look at adding SSO.
+- The database is only accessible from within the VNet.
+- Artifact (blob) storage is not IP restricted, with access managed by connection strings/keys.
+
+**Estimated Cost:**
+
+The Azure resources created by the defaults in the deployment script are:
 
 | Service | Quantity |
 | --- | --- |
@@ -149,9 +175,11 @@ If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and 
 | Private DNS Zone | 1 |
 | Private Endpoint | 1 |
 
-**Estimated Cost:**
+Costs will vary significantly based on usage, but to give an approximate range:
+
 - Light usage: £20/month (container apps mostly scaled to 0, ongoing database and networking costs only)
 - Heavy usage: £500/month (dominated by MLFlow container costs, if they are scaled to 3 replicas 24/7)
+
 
 ### Container Builds
 
