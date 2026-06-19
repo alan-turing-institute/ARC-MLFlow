@@ -21,7 +21,7 @@ uv sync
 
 `pwgen` is used to auto-generate passwords.
 
-## MLFlow Account and Project Setup
+## MLFlow Account and Workspace Setup [for an existing server]
 
 To run these commands you will need to know:
 
@@ -91,7 +91,7 @@ When a workspace is created, MLFlow creates two default roles for it - an admin 
 
 You may want to create a role with "Edit" access to the workspace for project members, which allows users assigned to it to also use/edit other people's experiments.
 
-## Using MLFlow in Python
+## Using MLFlow in Python [with an existing server]
 
 ⚠️ The MLFlow server will automatically scale off if unused for a period of time (currently 15 minutes). The containers will ramp back up automatically when requested, but the first connectiion after the cooldown period will be slow.
 
@@ -134,7 +134,7 @@ Example scripts you can run:
 
 If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browse through your tracked experiments and artefacts.
 
-## Deployment
+## Creating a new Deployment
 
 ### Components
 
