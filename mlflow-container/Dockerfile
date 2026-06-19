@@ -12,7 +12,7 @@
 FROM python:3.13-slim
 
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir "mlflow[auth]" azure-storage-blob "psycopg[binary]"
+    && pip install --no-cache-dir "mlflow[auth]>=3.14,<4" azure-storage-blob "psycopg[binary]"
 
 COPY start_mlflow_server.sh /root/start_mlflow_server.sh
 RUN chmod u+x /root/start_mlflow_server.sh

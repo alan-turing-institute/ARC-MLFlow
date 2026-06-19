@@ -5,7 +5,7 @@
 #############
 # ENVIRONMENT
 #############
-set -e
+set -eu
 echo "Loading environment variables from .env file"
 set -a; source .env; set +a
 
@@ -388,27 +388,31 @@ az containerapp update \
 # ============================================================================
 # Output Information
 # ============================================================================
-echo ""
-echo "✅ MLflow Deployment Complete"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📊 MLflow Tracking Server"
-echo "URL:              https://${FQDN}"
-echo "Resource Group:   ${RESOURCE_GROUP}"
-echo "Location:         ${LOCATION}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔐 Network Configuration"
-echo "✓ Allowed IPs: ${ALLOWED_IPS}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "💾 Storage"
-echo "Database:         ${POSTGRES_SERVER_NAME}"
-echo "PgBouncer:        ${PGBOUNCER_FQDN}"
-echo "Storage Account:  ${STORAGE_ACCOUNT_NAME}"
-echo "Artifacts:        ${ARTIFACT_URI}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "👥 MLFlow Admin Account"
-echo "Username: ${MLFLOW_ADMIN_USERNAME}"
-echo "Password: ${MLFLOW_ADMIN_PASSWORD}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "✨ Deployment complete. Access your MLflow server at: https://${FQDN}"
+DEPLOY_SUMMARY="deployment-summary.txt"
+cat > "${DEPLOY_SUMMARY}" <<EOF
+
+✅ MLflow Deployment Complete
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 MLflow Tracking Server
+URL:              https://${FQDN}
+Resource Group:   ${RESOURCE_GROUP}
+Location:         ${LOCATION}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 Network Configuration
+✓ Allowed IPs: ${ALLOWED_IPS}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💾 Storage
+Database:         ${POSTGRES_SERVER_NAME}
+PgBouncer:        ${PGBOUNCER_FQDN}
+Storage Account:  ${STORAGE_ACCOUNT_NAME}
+Artifacts:        ${ARTIFACT_URI}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👥 MLFlow Admin Account
+Username: ${MLFLOW_ADMIN_USERNAME}
+Password: ${MLFLOW_ADMIN_PASSWORD}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
+echo "✨ Deployment complete. Summary and credentials written to ${DEPLOY_SUMMARY}"
+echo "   Access your MLflow server at: https://${FQDN}"
