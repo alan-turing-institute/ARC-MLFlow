@@ -94,7 +94,7 @@ Running the `setup-env/create_workspace.sh` script will prompt for a workspace n
 
 User permissions should generally be managed via "roles", which can have multiple users assigned to them. The server is setup so that all users can *read* all workspaces, i.e. all users can see the content of all workspaces, but not create/change anything in them.
 
-When a workspace is created, MLFlow creates two default roles for it - an admin role (which lets users change everything about the workspace including access permissions for it), and a user rule (which lets users create experiments in the workspace but doesn't allow them to use/edit other people's experiments).
+When a workspace is created, MLFlow creates two default roles for it - an admin role (which lets users change everything about the workspace including access permissions for it), and a user role (which lets users create experiments in the workspace but doesn't allow them to use/edit other people's experiments).
 
 You may want to create a role with "Edit" access to the workspace for project members, which allows users assigned to it to also use/edit other people's experiments.
 
