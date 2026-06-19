@@ -136,6 +136,23 @@ If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and 
 
 ## Deployment
 
+### Components
+
+<img src="docs/azure_deployment.png" alt="Azure deployment components diagram" width="512"/>
+
+| Service | Quantity |
+| --- | --- |
+| Azure PostgreSQL B1ms with 32GB storage | 1 |
+| MLFlow Container Apps (2.0 CPU, 4 GiB RAM) | 0-3 (autoscale) |
+| PgBouncer Container App (0.25 CPU, 0.5 GiB RAM) | 0-1 (autoscale) |
+| Azure Blob Storage | 1 |
+| Private DNS Zone | 1 |
+| Private Endpoint | 1 |
+
+**Estimated Cost:**
+- Light usage: £20/month for light usage (container apps mostly scaled to 0, ongoing database and networking costs only)
+- Heavy usage: £500/month (dominated by MLFlow container costs, if they are scaled to 3 replicas 24/7)
+
 ### Container Builds
 
 The `mlflow-container` and `pgbouncer-container` directories contain docker files for MLFlow and PgBouncer (for managing connections to the database). The images are hosted with the GitHub container registry, and will be rebuilt whenever a change is pushed to the relevant directory in the repo.
