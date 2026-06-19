@@ -64,7 +64,7 @@ def main():
 
 
 if __name__ == "__main__":
-    mlflow.set_experiment("test-hf-trainer")
+    mlflow.set_experiment("examples")
     mlflow.enable_system_metrics_logging()
-    with mlflow.start_run():
+    with mlflow.start_run(run_name="hf-trainer"):
         main()

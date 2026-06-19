@@ -86,8 +86,8 @@ az postgres flexible-server create \
 MY_IP=$(curl -4 https://ifconfig.me)
 az postgres flexible-server firewall-rule create \
   --resource-group $RESOURCE_GROUP \
-  --name $POSTGRES_SERVER_NAME \
-  --rule-name "temp-setup-rule" \
+  --server-name $POSTGRES_SERVER_NAME \
+  --name "temp-setup-rule" \
   --start-ip-address $MY_IP \
   --end-ip-address $MY_IP
 
@@ -95,14 +95,14 @@ echo "📊 Creating MLflow database..."
 az postgres flexible-server db create \
   --resource-group $RESOURCE_GROUP \
   --server-name $POSTGRES_SERVER_NAME \
-  --database-name $MLFLOW_DB_NAME
+  --name $MLFLOW_DB_NAME
 
 echo "🔐 Creating MLflow authentication database..."
 az postgres flexible-server db create \
   --resource-group $RESOURCE_GROUP \
   --server-name $POSTGRES_SERVER_NAME \
-  --database-name $AUTH_DB_NAME
-
+  --name $AUTH_DB_NAME
+  
 POSTGRES_HOST="${POSTGRES_SERVER_NAME}.postgres.database.azure.com"
 
 echo "👤 Creating application DB users and grants..."
@@ -147,8 +147,8 @@ PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" psql \
 echo "🔒 Securing PostgreSQL - removing public access..."
 az postgres flexible-server firewall-rule delete \
   --resource-group $RESOURCE_GROUP \
-  --name $POSTGRES_SERVER_NAME \
-  --rule-name "temp-setup-rule" \
+  --server-name $POSTGRES_SERVER_NAME \
+  --name "temp-setup-rule" \
   --yes
 
 az postgres flexible-server update \
