@@ -168,7 +168,7 @@ bash deploy.sh
 
 ### Updating the Server
 
-🚨 This has a high chance of breaking things if MLFlow has released new features or made breaking changes since the last time the server was deployed! Re-building the containers, deleting the old MLFlow deployment, and creating a new one is more likely to work (but also not guaranteed).
+🚨 **This has a high chance of breaking things!** 🚨 If MLFlow has released new features or made breaking changes since the last time the server was deployed, re-building the containers, deleting the old MLFlow deployment, and creating a new one is less likely to cause issues (but also not guaranteed).
 
 1. Trigger re-builds via GitHub Actions if necessary
   - [MLFlow image action](https://github.com/alan-turing-institute/ARC-MLFlow/actions/workflows/build_mlflow.yaml)
