@@ -21,7 +21,7 @@ uv sync
 
 `pwgen` is used to auto-generate passwords.
 
-## Environment Setup
+## MLFlow Account and Project Setup
 
 To run these commands you will need to know:
 
