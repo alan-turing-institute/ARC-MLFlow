@@ -7,7 +7,7 @@ Azure MLFlow deployment and instructions for how to use it. It deploys (with cur
 - A PgBouncer container to manage connection pools from the MLFlow tracking servers and the database.
 - All of the above in a VNet, with access restricted to an IP allow list.
 - An Azure Storage Account and Blob for storing artifacts (models etc.) Publicly exposed but with authenticated access.
-- Basic user/password authentication to the MLFlow server (a better option would be to replace this to setup access via Microsoft/GitHub accounts using nginx/similar)
+- Basic user/password authentication to the MLFlow server (if we use/persist these servers we should setup SSO instead/as well as this)
 
 ## Pre-requisites
 
