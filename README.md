@@ -45,11 +45,24 @@ Ask the owner of the server for these, or you can get them from the Azure portal
 
 ### User Setup
 
-#### Create users in a browser
+### 1. Add an Allowed IP Address
+
+The Turing IP address is automatically added to the allow-list as part of the deployment (which will also be your IP address if you're on the VPN). If you need to add another, run:
+
+```bash
+cd setup-env
+bash add_ip.sh
+```
+
+This will prompt for an IP address/address range to add, and a suitable label for it.
+
+### 2. Create a user
+
+#### In a browser:
 
 If you are logged in to the MLFlow UI as an admin, you can create users from there by clicking on your username (bottom left) then going to the "Manage" menu.
 
-#### User creation script
+#### Via the user creation script:
 
 Running the following script:
 
@@ -67,18 +80,8 @@ Will:
 
 Source the saved `.env` file (`source .env`) before running scripts using `mlflow`, or add them to your `.bash_profile`/`.zprofile`/similar.
 
-### Add an Allowed IP Address
 
-The Turing IP address is automatically added to the allow-list as part of the deployment (which will also be your IP address if you're on the VPN). If you need to add another, run:
-
-```bash
-cd setup-env
-bash add_ip.sh
-```
-
-This will prompt for an IP address/address range to add, and a suitable label for it.
-
-### Workspace Setup
+### 3. Create a workspace [if needed]
 
 Experiments and runs on the MLFlow server are grouped under a "workspace". For our purposes we will generally want a separate workspace for each project. To create one:
 
@@ -102,7 +105,7 @@ You may want to create a role with "Edit" access to the workspace for project me
 
 General MLFlow documentation is available here: https://mlflow.org/docs/latest/ml/
 
-### Python Dependencies
+### 1. Python Dependencies
 
 ```bash
 uv sync
@@ -116,7 +119,7 @@ The main ones are:
 
 The rest of the dependencies in `pyproject.toml` are just for the examples.
 
-### MLFlow Environment Variables
+### 2. MLFlow Environment Variables
 
 ⚠️ These can be automatically obtained/set via the environment setup script described above.
 
@@ -127,7 +130,7 @@ You must have the following environment variables exported in your environment:
 - `MLFLOW_TRACKING_PASSWORD` - your MLFlow password
 - `AZURE_STORAGE_CONNECTION_STRING` - the connection string for the Azure storage account for artefacts (only needed if you're logging artefacts to Azure). If you want to log an artifact locally instead, you should be able to do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
 
-### Examples
+### 3. Examples
 
 Example scripts you can run:
 
@@ -135,7 +138,7 @@ Example scripts you can run:
 - `uv run mlflow-examples/train.py`: Automated logging of metrics and models with the HuggingFace transformers Trainer
 - `uv run mlflow-examples/sweep.py`: A hyperparameter sweep.
 
-### The MLFlow UI
+### 4. View runs in the MLFlow UI
 
 If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browse through your tracked experiments and artefacts.
 
