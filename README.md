@@ -11,11 +11,12 @@ Azure MLFlow deployment and instructions for how to use it. It deploys (with cur
 
 ## Pre-requisites
 
-Install the Azure CLI and login, selecting the correct subscription (probably "ARC") as active:
+Install the Azure CLI and login, selecting the correct subscription (probably "ARC") as active, and install Python dependencies:
 
 ```bash
 brew install azure-cli pwgen
 az login
+uv sync
 ```
 
 `pwgen` is used to auto-generate passwords.
@@ -24,12 +25,23 @@ az login
 
 To run these commands you will need to know:
 
-- The Azure resource group the MLFlow server has been deployed into (default: `arc-turing-mlflow`)
-- The name of the MLFlow container app (default: same as the resource group)
+- If using the user interface
+  - The URL of the MLFlow server
+- If using the setup scripts
+  - The Azure resource group the MLFlow server has been deployed into (default: `arc-turing-mlflow`)
+  - The name of the MLFlow container app (default: same as the resource group)
+  - The Azure CLI installed and logged in (see pre-requisites)
+  - A `uv` environment with `mlflow[auth]` installed in it.
 
-### MLFlow User Setup and Environment Variables
+Ask the owner of the server for these, or you can get them from the Azure portal yourself.
 
-⚠️ This script assumes you are logged into the Azure CLI (see pre-requisites) and have a `uv` environment with `mlflow[auth]` installed (see Python Dependencies).
+### User Setup
+
+#### Create users in a browser
+
+If you are logged in to the MLFlow UI as an admin, you can create users from there by clicking on your username (bottom left) then going to the "Manage" menu.
+
+#### User creation script
 
 Running the following script:
 
@@ -58,7 +70,27 @@ bash add_ip.sh
 
 This will prompt for an IP address/address range to add, and a suitable label for it.
 
-## Using MLFlow
+### Workspace Setup
+
+Experiments and runs on the MLFlow server are grouped under a "workspace". For our purposes we will generally want a separate workspace for each project. To create one:
+
+#### In the browser
+
+If logged in to the MLFlow UI as an admin, the homepage showing the list of workspaces has a "Create new Workspace" button.
+
+#### Workspace creation script
+
+Running the `setup-env/create_workspace.sh` script will prompt for a workspace name and a username to make admin on that workspace, and create the workspace for you using the API.
+
+#### Workspace permissions
+
+User permissions should generally be managed via "roles", which can have multiple users assigned to them. The server is setup so that all users can *read* all workspaces, i.e. all users can see the content of all workspaces, but not create/change anything in them.
+
+When a workspace is created, MLFlow creates two default roles for it - an admin role (which lets users change everything about the workspace including access permissions for it), and a user rule (which lets users create experiments in the workspace but doesn't allow them to use/edit other people's experiments).
+
+You may want to create a role with "Edit" access to the workspace for project members, which allows users assigned to it to also use/edit other people's experiments.
+
+## Using MLFlow in Python
 
 ⚠️ The MLFlow server will automatically scale off if unused for a period of time (currently 15 minutes). The containers will ramp back up automatically when requested, but the first connectiion after the cooldown period will be slow.
 
@@ -75,7 +107,6 @@ The main ones are:
 - `mlflow[auth]`: The Python library for interacting with a MLFlow server
 - `psutil`, `nvidia-ml-py`: If you want to log system (CPU, GPU respectively) stats with your job
 - `azure-storage-blob`, `azure-identity`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
-- `hyperopt`: Is the package MLFlow recommends for hyperparameter sweeps.
 
 The rest of the dependencies in `pyproject.toml` are just for the examples.
 
@@ -117,15 +148,9 @@ cd container-app
 bash deploy.sh
 ```
 
-### Delete the Deployment (and all data!)
-
-```bash
-az group delete --name $RESOURCE_GROUP
-```
-
-Where `$RESOURCE_GROUP` is the name of the resource group you deployed MLFlow to.
-
 ### Updating the Server
+
+🚨 This has a high chance of breaking things if MLFlow has released new features or made breaking changes since the last time the server was deployed! Re-building the containers, deleting the old MLFlow deployment, and creating a new one is more likely to work (but also not guaranteed).
 
 1. Trigger re-builds via GitHub Actions if necessary
   - [MLFlow image action](https://github.com/alan-turing-institute/ARC-MLFlow/actions/workflows/build_mlflow.yaml)
@@ -139,3 +164,11 @@ Where `$RESOURCE_GROUP` is the name of the resource group you deployed MLFlow to
   --image ghcr.io/alan-turing-institute/arc-mlflow-image:latest
   ```
   Replace `--name` with either the MLFlow or PG Bouncer container as required, e.g. `arc-turing-mlflow` or `pgboucner-app` (see `container-app/.env` for defaults).
+
+### Delete the Deployment (and all data!)
+
+```bash
+az group delete --name $RESOURCE_GROUP
+```
+
+Where `$RESOURCE_GROUP` is the name of the resource group you deployed MLFlow to.
