@@ -1,6 +1,6 @@
 # ARC-MLFlow
 
-This repo deploys a MLFlow server to Azure. If you just want to learn about what it deploys, see [here](#components). If you want to use it, keep reading.
+This repo deploys an MLFlow server to Azure. If you just want to learn about what it deploys, see [here](#components). If you want to use it, keep reading.
 
 **⚠️ Caveats:** Although I've made best efforts, within reason, I cannot assure the security or stability of the server. With an abundance of caution I'd suggest you work under the assumption that:
 - Everything logged to MLFlow is public.
