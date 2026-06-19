@@ -186,11 +186,11 @@ Costs will vary significantly based on usage, but to give an approximate range:
 
 ### Container Builds
 
-The `mlflow-container` and `pgbouncer-container` directories contain docker files for MLFlow and PgBouncer (for managing connections to the database). The images are hosted with the GitHub container registry, and will be rebuilt whenever a change is pushed to the relevant directory in the repo.
+The `mlflow-container` and `pgbouncer-container` directories contain docker files for MLFlow and PgBouncer. The images are hosted with GitHub container registry, and will be rebuilt whenever a change is pushed to the relevant directory in the repo.
 
 ### Azure Deployment
 
-First, edit any variables you would like to in `container-app/.env` - this specifies names, passwords, and IP restrictions for the deployment, for example. Ensure the resource group you're specifying doesn't already exist. By default passwords are auto-generated and access to the MLFlow server is restricted to the deployment IP address.
+First, edit any variables you would like to in `container-app/.env` - this specifies names, passwords, and IP restrictions for the deployment, for example. Other aspects are hardcoded in `deploy.sh` and the MLFlow/PgBouncer dockerfiles (sorry). Ensure the resource group you're specifying doesn't already exist. By default passwords are auto-generated and access to the MLFlow server is restricted to the deployment IP address.
 
 ```bash
 cd container-app
