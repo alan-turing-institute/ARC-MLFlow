@@ -1,3 +1,8 @@
+"""
+Example of logging a hyperopt hyperparameter sweep to MLFlow, with each run within the
+sweep nested under a parent run.
+"""
+
 import mlflow
 import numpy as np
 from datasets import load_dataset

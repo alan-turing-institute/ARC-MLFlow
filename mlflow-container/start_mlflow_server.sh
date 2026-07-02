@@ -1,4 +1,5 @@
 #!/bin/bash
+# Laaunch script for the MLFLow server, called as the final command in the mlflow-container Dockerfile
 export MLFLOW_AUTH_CONFIG_PATH="/tmp/basic_auth.ini"
 
 cat > $MLFLOW_AUTH_CONFIG_PATH << EOF

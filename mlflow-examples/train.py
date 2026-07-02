@@ -1,3 +1,8 @@
+"""
+Example showing automatic logging of a HuggingFace Transformers model training run to
+MLFlow, including system metrics and storing trained models as artifacts.
+"""
+
 import mlflow
 from datasets import load_dataset
 from transformers import (

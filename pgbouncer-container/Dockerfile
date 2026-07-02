@@ -1,3 +1,4 @@
+# pgbouncer container for managing connections to the MLFlow server's PostgreSQL database
 # From https://github.com/edoburu/docker-pgbouncer/blob/master/Dockerfile
 FROM alpine:3.22 AS build
 ARG VERSION=1.24.1

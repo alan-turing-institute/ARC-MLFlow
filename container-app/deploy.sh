@@ -1,6 +1,5 @@
 #!/bin/bash
 # MLflow on Azure Container Apps - Deployment Script
-# Features: HTTPS, IP restrictions, Basic Auth, PostgreSQL, Blob Storage
 
 #############
 # ENVIRONMENT
