@@ -1,3 +1,4 @@
+# Add an allowed IP address or range to the MLFlow server (Azure Container App)
 set -e
 
 read -p "Azure Deployment Resource Group [default: arc-turing-mlflow]: " RESOURCE_GROUP

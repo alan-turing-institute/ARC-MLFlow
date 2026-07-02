@@ -1,3 +1,4 @@
+# Create a new MLFlow user and save the environment details to a .env file
 set -e
 
 echo "User and server details for new MLFlow user creation:"

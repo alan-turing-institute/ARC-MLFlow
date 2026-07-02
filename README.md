@@ -68,7 +68,7 @@ Running the following script:
 
 ```bash
 cd setup-env
-bash make_env.sh
+bash add_user.sh
 ```
 
 Will:

@@ -1,3 +1,4 @@
+# Create a new workspace (project area) on the MLFlow server
 set -e
 
 read -p "Name of the workspace to create: " NEW_WORKSPACE_NAME
