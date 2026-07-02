@@ -177,11 +177,12 @@ The Azure resources created by the defaults in the deployment script are:
 | Azure Blob Storage | 1 |
 | Private DNS Zone | 1 |
 | Private Endpoint | 1 |
+| Public IP and Load Balancer | 1 |
 
 Costs will vary significantly based on usage, but to give an approximate range:
 
-- Light usage: £20/month (container apps mostly scaled to 0, ongoing database and networking costs only)
-- Heavy usage: £500/month (dominated by MLFlow container costs, if they are scaled to 3 replicas 24/7)
+- Light usage: £35/month (container apps mostly scaled to 0, ongoing database and networking costs only)
+- Heavy usage: £535/month (dominated by MLFlow container costs, if they are scaled to 3 replicas 24/7)
 
 
 ### Container Builds
@@ -196,6 +197,8 @@ First, edit any variables you would like to in `container-app/.env` - this speci
 cd container-app
 bash deploy.sh
 ```
+
+ℹ️ **Note:** Most components are placed in a single resource group (`arc-turing-mlflow` by default). A load balancer and public IP address are created in a separate, Azure managed, resource group with an `ME_` prefix.
 
 ### Updating the Server
 

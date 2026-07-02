@@ -12,6 +12,11 @@ if [ -z "$NEW_PASSWORD" ]; then
     NEW_PASSWORD=$(pwgen 32 1)
 fi
 
+read -p "MLFlow Client Timeout (seconds) [default: 300]: " MLFLOW_HTTP_REQUEST_TIMEOUT
+if [ -z "$MLFLOW_HTTP_REQUEST_TIMEOUT" ]; then
+    MLFLOW_HTTP_REQUEST_TIMEOUT=300
+fi
+
 read -p "Azure Deployment Resource Group [default: arc-turing-mlflow]: " RESOURCE_GROUP
 if [ -z "$RESOURCE_GROUP" ]; then
     RESOURCE_GROUP="arc-turing-mlflow"
@@ -68,6 +73,7 @@ MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}"
 AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}"
 MLFLOW_TRACKING_USERNAME="${NEW_USERNAME}"
 MLFLOW_TRACKING_PASSWORD="${NEW_PASSWORD}"
+MLFLOW_HTTP_REQUEST_TIMEOUT="${MLFLOW_HTTP_REQUEST_TIMEOUT}"
 set +a
 EOF
 echo "✅ MLFlow environment details saved to .env"
