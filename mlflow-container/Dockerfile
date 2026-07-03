@@ -3,7 +3,7 @@
 #   /root/start_mlflow_server.sh
 # And environment variables including (see deploy.sh or MLFlow documentation for options):
 #   MLFLOW_BACKEND_STORE_URI
-#   MLFLOW_DEFAULT_ARTIFACT_ROOT
+#   MLFLOW_ARTIFACTS_DESTINATION
 #   MLFLOW_PORT
 #   MLFLOW_DB_NAME
 #   AUTH_DB_CONNECTION_STRING

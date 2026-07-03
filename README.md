@@ -76,7 +76,7 @@ Will:
 - Prompt for a username and password to create on the MLFlow server
 - Ask for the resource group and app name of the deployed MLFlow server
 - Create the user on the server
-- Save a `.env` file containing the necessary environment variables to set to use it (`MLFLOW_TRACKING_URI`, `AZURE_STORAGE_CONNECTION_STRING`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`)
+- Save a `.env` file containing the necessary environment variables to set to use it (`MLFLOW_TRACKING_URI`, `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`)
 
 Source the saved `.env` file (`source .env`) before running scripts using `mlflow`, or add them to your `.bash_profile`/`.zprofile`/similar.
 
@@ -115,7 +115,7 @@ The main ones are:
 
 - `mlflow[auth]`: The Python library for interacting with a MLFlow server
 - `psutil`, `nvidia-ml-py`: If you want to log system (CPU, GPU respectively) stats with your job
-- `azure-storage-blob`, `azure-identity`: If you want to log artifacts (files, e.g. models), as these are stored in an Azure blob.
+- `azure-storage-blob`, `azure-identity`: Not required for normal artifact logging (artifact uploads/downloads are proxied through the MLFlow server - see below), but kept for advanced/direct Azure blob access if needed.
 
 The rest of the dependencies in `pyproject.toml` are just for the examples.
 
@@ -130,8 +130,7 @@ You must have the following environment variables exported in your environment:
 - `MLFLOW_TRACKING_URI` - the URL of the MLFlow server
 - `MLFLOW_TRACKING_USERNAME` - your MLFlow username
 - `MLFLOW_TRACKING_PASSWORD` - your MLFlow password
-- `AZURE_STORAGE_CONNECTION_STRING` - the connection string for the Azure storage account for artefacts (only needed if you're logging artefacts to Azure). If you want to log an artifact locally instead, you should be able to do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
-  - ⚠️ Unlike the MLFlow server itself, artifact (blob) storage is **not** IP-restricted - anyone with this connection string can read/write all artifacts directly, bypassing MLFlow's authentication entirely. Treat it like a password and avoid logging anything sensitive as an artifact.
+- You do **not** need `AZURE_STORAGE_CONNECTION_STRING` to log artefacts - the MLFlow server proxies artifact uploads/downloads to Azure Blob storage on your behalf, authenticated the same way as everything else via `MLFLOW_TRACKING_USERNAME`/`MLFLOW_TRACKING_PASSWORD`. If you want to log an artifact locally instead, you can do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
 - `MLFLOW_HTTP_REQUEST_TIMEOUT` - how long (in seconds) the client waits for a response before timing out, default `300`. Set this high because the server can take a while to respond to the first request after scaling up from idle - see [Troubleshooting](#troubleshooting) below.
 
 ### 3. Examples
@@ -174,7 +173,7 @@ They connect together roughly like this:
 - Access to the MLFlow server is IP restricted (via a configurable allowlist in Azure).
 - Authentication on the server is managed by MLFlow's built-in `basic-auth`, which allows role-based permissions for users to different resources on the server. If we use/persist servers longer-term we should look at adding SSO.
 - The database is only accessible from within the VNet.
-- Artifact (blob) storage is not IP restricted, with access managed by connection strings/keys.
+- Artifact (blob) storage has public network access disabled entirely and is only reachable from within the VNet via a private endpoint - all artifact access from clients is proxied through the MLFlow server (and so subject to its authentication and IP allow-list), rather than talking to storage directly.
 
 **Estimated Cost:**
 
@@ -186,8 +185,8 @@ The Azure resources created by the defaults in the deployment script are:
 | MLFlow Container Apps (2.0 CPU, 4 GiB RAM) | 0-3 (autoscale) |
 | PgBouncer Container App (0.25 CPU, 0.5 GiB RAM) | 0-1 (autoscale) |
 | Azure Blob Storage | 1 |
-| Private DNS Zone | 1 |
-| Private Endpoint | 1 |
+| Private DNS Zone | 2 |
+| Private Endpoint | 2 |
 | Public IP and Load Balancer | 1 |
 
 Costs will vary significantly based on usage, but to give an approximate range:
