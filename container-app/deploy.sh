@@ -403,7 +403,7 @@ Location:         ${LOCATION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 Storage
 Database:         ${POSTGRES_SERVER_NAME}
-PgBouncer:        ${PGBOUNCER_FQDN}
+PgBouncer:        ${PGBOUNCER_APP_NAME}:${DB_PORT} (internal only)
 Storage Account:  ${STORAGE_ACCOUNT_NAME}
 Artifacts:        ${ARTIFACT_URI}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

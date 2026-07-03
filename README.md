@@ -4,7 +4,7 @@ This repo deploys an MLFlow server to Azure. If you just want to learn about wha
 
 **⚠️ Caveats:** Although I've made best efforts, within reason, I cannot assure the security or stability of the server. With an abundance of caution I'd suggest you work under the assumption that:
 - Everything logged to MLFlow is public.
-  - *Positive version: Access is controlled via an Azure-managed IP allow-list and MLFlow-managed user accounts*
+  - *Positive version: Access is controlled via an Azure-managed IP allow-list and MLFlow-managed user accounts. However, the server uses basic authentication so your passwords are transmitted in plain (base64 encoded) text - **you must use HTTPS to avoid your credentials being stolen, not HTTP.***
 - The server may fail and all data be deleted at any time.
   - *Positive version: The database is an Azure managed service, so we should be able to recover data from there if everything else fails, unless someone accidentally deletes it...*
 
@@ -119,6 +119,8 @@ The main ones are:
 
 The rest of the dependencies in `pyproject.toml` are just for the examples.
 
+⚠️ You need `mlflow[auth]>=3.14,<4` (already pinned in `pyproject.toml`, so `uv sync` will get this for you). Older `mlflow` installs don't support the `--enable-workspaces` server feature this deployment relies on (`mlflow.set_workspace(...)`), so if you're using an existing environment rather than `uv sync`, make sure it's on a compatible version.
+
 ### 2. MLFlow Environment Variables
 
 ⚠️ These can be automatically obtained/set via the environment setup script described above.
@@ -129,6 +131,8 @@ You must have the following environment variables exported in your environment:
 - `MLFLOW_TRACKING_USERNAME` - your MLFlow username
 - `MLFLOW_TRACKING_PASSWORD` - your MLFlow password
 - `AZURE_STORAGE_CONNECTION_STRING` - the connection string for the Azure storage account for artefacts (only needed if you're logging artefacts to Azure). If you want to log an artifact locally instead, you should be able to do so by setting the `artifact_location` when creating the MLFlow experiment you are logging results to, e.g. `mlflow.create_experiment("experiment_name", artifact_location="/your/local/path")`.
+  - ⚠️ Unlike the MLFlow server itself, artifact (blob) storage is **not** IP-restricted - anyone with this connection string can read/write all artifacts directly, bypassing MLFlow's authentication entirely. Treat it like a password and avoid logging anything sensitive as an artifact.
+- `MLFLOW_HTTP_REQUEST_TIMEOUT` - how long (in seconds) the client waits for a response before timing out, default `300`. Set this high because the server can take a while to respond to the first request after scaling up from idle - see [Troubleshooting](#troubleshooting) below.
 
 ### 3. Examples
 
@@ -141,6 +145,13 @@ Example scripts you can run:
 ### 4. View runs in the MLFlow UI
 
 If you go to the `MLFLOW_TRACKING_URI` in a browser and enter your username and password you should get to the UI and be able to browse through your tracked experiments and artefacts.
+
+### 5. Troubleshooting
+
+- **Slow or timed-out first request:** The MLFlow server scales down to zero after 15 minutes of inactivity, and takes a while to ramp back up on the next request. If your first call of the session is slow or times out, that's expected - a higher `MLFLOW_HTTP_REQUEST_TIMEOUT` (see above) and/or retrying usually resolves it.
+- **401/403 errors:** Usually a wrong or stale `MLFLOW_TRACKING_USERNAME`/`MLFLOW_TRACKING_PASSWORD`, or forgetting to `source` your `.env` file in the current shell.
+- **Connection refused/timed out at the network level:** Your IP address is probably not on the allow-list - see [Add an Allowed IP Address](#1-add-an-allowed-ip-address).
+- **Forgot your password:** There's no self-service reset. Ask an admin to recreate your account (via the UI or `add_user.sh`).
 
 ## Creating a new Deployment
 
@@ -215,7 +226,7 @@ bash deploy.sh
   --name arc-turing-mlflow \
   --image ghcr.io/alan-turing-institute/arc-mlflow-image:latest
   ```
-  Replace `--name` with either the MLFlow or PG Bouncer container as required, e.g. `arc-turing-mlflow` or `pgboucner-app` (see `container-app/.env` for defaults).
+  Replace `--name` with either the MLFlow or PG Bouncer container as required, e.g. `arc-turing-mlflow` or `pgbouncer-app` (see `container-app/.env` for defaults).
 
 ### Delete the Deployment (and all data!)
 
