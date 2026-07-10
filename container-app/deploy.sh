@@ -452,21 +452,16 @@ DEPLOY_SUMMARY="deployment-summary.txt"
 cat > "${DEPLOY_SUMMARY}" <<EOF
 
 ✅ MLflow Deployment Complete
-
+Resource Group:   ${RESOURCE_GROUP}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 MLflow Tracking Server
 URL:              https://${FQDN}
-Resource Group:   ${RESOURCE_GROUP}
-Location:         ${LOCATION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔐 Network Configuration
 ✓ Allowed IPs: ${ALLOWED_IPS}
-✓ Storage Account public access disabled (private endpoint only)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 Storage
-Database:         ${POSTGRES_SERVER_NAME}
-PgBouncer:        ${PGBOUNCER_APP_NAME}:${DB_PORT} (internal only)
-Storage Account:  ${STORAGE_ACCOUNT_NAME}
+Database:         ${POSTGRES_PRIVATE_HOST}
 Artifacts:        ${ARTIFACT_URI}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👥 MLFlow Admin Account
