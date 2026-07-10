@@ -10,6 +10,7 @@ database_uri = ${AUTH_DB_CONNECTION_STRING}
 admin_username = ${MLFLOW_ADMIN_USERNAME}
 admin_password = ${MLFLOW_ADMIN_PASSWORD}
 auth_cache_ttl_seconds = 3600
+auth_cache_max_size = 10000
 
 EOF
 
