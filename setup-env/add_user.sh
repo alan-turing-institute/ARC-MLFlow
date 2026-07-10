@@ -37,14 +37,6 @@ FQDN=$(az containerapp show \
 
 MLFLOW_TRACKING_URI="https://$FQDN"
 
-echo "🔍 Retrieving Azure Storage connection string..."
-AZURE_STORAGE_CONNECTION_STRING=$(az containerapp secret show \
-    --resource-group $RESOURCE_GROUP \
-    --name $CONTAINER_APP_NAME \
-    --secret-name "storage-conn-str" \
-    --query value \
-    --output tsv)
-
 echo "🔐 Retrieving MLFlow admin credentials..."
 export MLFLOW_TRACKING_USERNAME=$(az containerapp secret show \
     --resource-group $RESOURCE_GROUP \
@@ -71,7 +63,6 @@ echo "💾 Saving environment details"
 cat > .env<< EOF
 set -a
 MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}"
-AZURE_STORAGE_CONNECTION_STRING="${AZURE_STORAGE_CONNECTION_STRING}"
 MLFLOW_TRACKING_USERNAME="${NEW_USERNAME}"
 MLFLOW_TRACKING_PASSWORD="${NEW_PASSWORD}"
 MLFLOW_HTTP_REQUEST_TIMEOUT="${MLFLOW_HTTP_REQUEST_TIMEOUT}"

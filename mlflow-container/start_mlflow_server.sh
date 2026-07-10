@@ -17,7 +17,9 @@ mlflow server \
     --host 0.0.0.0 \
     --port $MLFLOW_PORT \
     --backend-store-uri $MLFLOW_BACKEND_STORE_URI \
-    --default-artifact-root $MLFLOW_DEFAULT_ARTIFACT_ROOT \
+    --artifacts-destination $MLFLOW_ARTIFACTS_DESTINATION \
     --app-name basic-auth \
     --serve-artifacts \
-    --enable-workspaces
+    --enable-workspaces \
+    --gunicorn-opts "--threads=8" \
+

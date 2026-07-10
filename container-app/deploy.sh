@@ -217,7 +217,8 @@ az storage account create \
   --name $STORAGE_ACCOUNT_NAME \
   --location $LOCATION \
   --sku Standard_LRS \
-  --kind StorageV2
+  --kind StorageV2 \
+  --min-tls-version TLS1_2
 
 # Get storage account key and connection string
 export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string \
@@ -237,6 +238,66 @@ az storage container create \
   --connection-string $AZURE_STORAGE_CONNECTION_STRING
 
 ARTIFACT_URI="wasbs://${STORAGE_CONTAINER_NAME}@${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/"
+
+echo "🔒 Disabling Storage Account public network access..."
+# MLflow proxies artifact access through the server (--artifacts-destination / --serve-artifacts),
+# so only the MLflow container app needs to reach storage - via the private endpoint below
+az storage account update \
+  --resource-group $RESOURCE_GROUP \
+  --name $STORAGE_ACCOUNT_NAME \
+  --public-network-access Disabled
+
+echo "🔗 Creating private endpoint for Storage Account..."
+az network private-endpoint create \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --name "${STORAGE_ACCOUNT_NAME}-pe" \
+  --vnet-name "${RESOURCE_GROUP}-vnet" \
+  --subnet private-endpoints-subnet \
+  --private-connection-resource-id "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/${STORAGE_ACCOUNT_NAME}" \
+  --group-ids blob \
+  --connection-name "${STORAGE_ACCOUNT_NAME}-connection"
+
+# Create private DNS zone for Storage Account blob hostname resolution
+echo "🔐 Setting up Private DNS Zone for Storage Account..."
+az network private-dns zone create \
+  --resource-group $RESOURCE_GROUP \
+  --name "privatelink.blob.core.windows.net"
+
+# Link the private DNS zone to the VNet
+# This ensures the MLflow container app resolves the blob hostname to the private endpoint IP,
+# regardless of its own (non-static) outbound IP
+az network private-dns link vnet create \
+  --resource-group $RESOURCE_GROUP \
+  --zone-name "privatelink.blob.core.windows.net" \
+  --name "${RESOURCE_GROUP}-blob-link" \
+  --virtual-network "${RESOURCE_GROUP}-vnet" \
+  --registration-enabled false
+
+# Get the private IP from the private endpoint
+STORAGE_PRIVATE_IP=$(az network private-endpoint show \
+  --resource-group $RESOURCE_GROUP \
+  --name "${STORAGE_ACCOUNT_NAME}-pe" \
+  --query 'customDnsConfigs[0].ipAddresses[0]' -o tsv)
+
+if [ -z "$STORAGE_PRIVATE_IP" ]; then
+  echo "ERROR: Failed to get private IP for Storage Account endpoint"
+  exit 1
+fi
+
+# Create DNS A record mapping the blob hostname to the private endpoint IP
+az network private-dns record-set a create \
+  --resource-group $RESOURCE_GROUP \
+  --zone-name "privatelink.blob.core.windows.net" \
+  --name $STORAGE_ACCOUNT_NAME
+
+az network private-dns record-set a add-record \
+  --resource-group $RESOURCE_GROUP \
+  --zone-name "privatelink.blob.core.windows.net" \
+  --record-set-name $STORAGE_ACCOUNT_NAME \
+  --ipv4-address $STORAGE_PRIVATE_IP
+
+echo "✓ Private DNS configured: ${STORAGE_ACCOUNT_NAME}.blob.core.windows.net → ${STORAGE_PRIVATE_IP}"
 
 # ============================================================================
 # Deploy Container Apps Environment
@@ -337,14 +398,14 @@ az containerapp create \
     "auth-db-conn-str=${AUTH_DB_CONNECTION_STRING}" \
     "auth-secret-key=${MLFLOW_FLASK_SERVER_SECRET_KEY}" \
     "backend-store-uri=${DB_CONNECTION_STRING}" \
-    "default-artifact-root=${ARTIFACT_URI}" \
+    "artifacts-destination=${ARTIFACT_URI}" \
     "storage-conn-str=${AZURE_STORAGE_CONNECTION_STRING}" \
     "storage-access-key=${AZURE_STORAGE_ACCESS_KEY}" \
   --env-vars \
     "AZURE_STORAGE_CONNECTION_STRING=secretref:storage-conn-str" \
     "AZURE_STORAGE_ACCESS_KEY=secretref:storage-access-key" \
     "MLFLOW_BACKEND_STORE_URI=secretref:backend-store-uri" \
-    "MLFLOW_DEFAULT_ARTIFACT_ROOT=secretref:default-artifact-root" \
+    "MLFLOW_ARTIFACTS_DESTINATION=secretref:artifacts-destination" \
     "MLFLOW_DB_NAME=${MLFLOW_DB_NAME}" \
     "AUTH_DB_CONNECTION_STRING=secretref:auth-db-conn-str" \
     "MLFLOW_ADMIN_USERNAME=secretref:admin-username" \
@@ -400,6 +461,7 @@ Location:         ${LOCATION}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔐 Network Configuration
 ✓ Allowed IPs: ${ALLOWED_IPS}
+✓ Storage Account public access disabled (private endpoint only)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💾 Storage
 Database:         ${POSTGRES_SERVER_NAME}
