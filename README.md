@@ -101,6 +101,17 @@ When a workspace is created, MLFlow creates two default roles for it - an admin 
 
 You may want to create a role with "Edit" access to the workspace for project members, which allows users assigned to it to also use/edit other people's experiments.
 
+## Checking the Server Status and your Environment
+
+Before running any scripts, or at the start of a SLURM job script, run these commands to check you have the correct environment variables set and can reach and authenticate with the MLFlow server:
+
+```bash
+echo MLFLOW_TRACKING_USERNAME=$MLFLOW_TRACKING_USERNAME
+echo MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI
+echo "Server Status: $(curl -s $MLFLOW_TRACKING_URI/health)"
+echo "Authenticated User: $(curl -s $MLFLOW_TRACKING_URI/api/2.0/mlflow/users/get?username=$MLFLOW_TRACKING_USERNAME -u "$MLFLOW_TRACKING_USERNAME:$MLFLOW_TRACKING_PASSWORD")"
+```
+
 ## Using MLFlow in Python
 
 General MLFlow documentation is available here: https://mlflow.org/docs/latest/ml/

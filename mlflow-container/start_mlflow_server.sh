@@ -21,4 +21,5 @@ mlflow server \
     --app-name basic-auth \
     --serve-artifacts \
     --enable-workspaces \
+    --gunicorn-opts "--threads=8" \
 
